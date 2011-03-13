@@ -27,9 +27,12 @@ public class ChainTreeScene {
 	/*
 	 * Colours of the different part of the protein backbone.
 	 */
-	public Color colorPuptideBond = Color.BLACK;
-	public Color colorAlphaHelix = new Color(255, 255, 0, 80);
-	public Color colourBetaSheet = new Color(0, 255, 0, 80);
+	public Color colorAtom = new Color(0, 0, 255, 100);
+	public Color colorBond = Color.CYAN;
+	
+	public Color colorPeptideBond = new Color(169, 169, 169, 210);
+	public Color colorAlphaHelix = new Color(255, 255, 0, 255);
+	public Color colourBetaSheet = new Color(0, 255, 0, 255);
 	
 	
 	
@@ -37,6 +40,7 @@ public class ChainTreeScene {
 	 * Create a new empty scene.
 	 */
 	public ChainTreeScene() {
+		this.scene.setBackgroundColor(Color.DARK_GRAY);
 	}
 	
 	/**
@@ -45,7 +49,10 @@ public class ChainTreeScene {
 	 * @param cTree The tree to be in the scene.
 	 */
 	public ChainTreeScene(ChainTree cTree) {
+		this();
+		
 		this.add(cTree);
+		this.scene.centerCamera();
 		this.scene.autoZoom();
 	}
 	
@@ -55,9 +62,12 @@ public class ChainTreeScene {
 	 * @param cTrees The trees to be on the scene.
 	 */
 	public ChainTreeScene(Collection<ChainTree> cTrees) {
+		this();
+		
 		for(ChainTree cTree : cTrees) {
 			this.add(cTree);
 		}
+		this.scene.centerCamera();
 		this.scene.autoZoom();
 	}
 	
@@ -82,8 +92,19 @@ public class ChainTreeScene {
 				guiNodes[i] = node;
 				
 				// add GUI elements to scene
-				this.scene.addShape(node.sphere, this.colorPuptideBond);
-				this.scene.addShape(node.cylinder, this.colorPuptideBond);
+				Color bondColor;
+				if (cTree.isInAlphaHelix(i)) {
+					bondColor = this.colorAlphaHelix;
+				} else if (cTree.isInBetaSheet(i)) {
+					bondColor = this.colourBetaSheet;
+				} else if (cTree.isPeptide(i)) {
+					bondColor = this.colorPeptideBond;
+				} else {
+					bondColor = this.colorBond;
+				}
+				
+				this.scene.addShape(node.sphere, this.colorAtom);
+				this.scene.addShape(node.cylinder, bondColor);
 			}
 			
 			// store the chain tree GUI info
@@ -126,7 +147,7 @@ public class ChainTreeScene {
 	 * of an backbone element. 
 	 */
 	private class GUINode {
-		public Sphere sphere = new Sphere(new Vector(0,0,0), 1.7f);
+		public Sphere sphere = new Sphere(new Vector(0,0,0), 0.85f);
 		public Cylinder cylinder = new Cylinder(new Vector(0,0,0), new Vector(0,0,0), 0.4f);
 		
 		public GUINode(Point3d current, Point3d next) {

@@ -8,19 +8,24 @@ import math.matrix.TransformationMatrix;
 
 public class CTLeaf extends CTNode {
 	
+	public double atomRadius = 1.7;
 	private double angle;	// the rotation angle of this bond
 	
 	/**
 	 * Create a leaf node from its position and the position of the previous node.
 	 *  
 	 * @param relativePosition The position of this node relative to the previous node.
+	 * @param i The index of the bond in the backbone.
 	 */
-	public CTLeaf(Point3d relativePosition) {
+	public CTLeaf(Point3d relativePosition, int i) {
+		//
+		super.low = super.high = i;
+		
 		// transformation matrix
 		this.transformationMatrix = new TransformationMatrix(relativePosition.x, relativePosition.y, relativePosition.z);
 		
 		// bounding volume
-		this.boundingVolume = new LinesegmentSweptSphere(relativePosition, 1.0);
+		this.boundingVolume = new LinesegmentSweptSphere(relativePosition, this.atomRadius);
 	}
 	
 	
@@ -43,5 +48,10 @@ public class CTLeaf extends CTNode {
 	public void rotate(double angle) {
 		this.angle -= angle;
 		transformationMatrix.rotate(this.angle);
+	}
+	
+	@Override
+	public String toString() {
+		return "CTLeaf: " + this.low;
 	}
 }

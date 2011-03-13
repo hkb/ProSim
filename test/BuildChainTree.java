@@ -17,18 +17,28 @@ public class BuildChainTree {
 	 */
 	public static void main(String[] args) throws InterruptedException {
 
-		System.out.println("Creating molecule");
 		ChainTree cTree = new ChainTree("1PUX");
-		System.out.println("Painting molecule");
-		new BinaryTreePainter(cTree);
-/*
-		ChainTreeScene scene = new ChainTreeScene(cTree);
-		
+
+		//ChainTreeScene scene = new ChainTreeScene(cTree);
+				
 		while(true) {
-			Thread.sleep(100000);
-			cTree.changeRotationAngle(3, Math.random()*180);
-			scene.repaint();
+			Thread.sleep(500);
+
+			int i = (int) (Math.random() * cTree.length());
+			double angle = (Math.random()-0.5)*15*(Math.PI/180);
+			
+			System.out.println(i + " - " + angle);
+			
+			cTree.changeRotationAngle(i, angle);
+			
+			if(cTree.isClashing()) {
+				System.err.println("Self clash!");
+				System.exit(0);
+				cTree.changeRotationAngle(i, -angle);
+				
+			} else {
+				//scene.repaint();
+			}
 		}
-		*/
 	}
 }

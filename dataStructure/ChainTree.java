@@ -1,23 +1,27 @@
 package dataStructure;
 
-import geom3d.PointSet3d;
-
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.vecmath.Point3d;
 
+import tool.BinaryTreePainter;
 import tool.PDBParser;
 
 import math.matrix.TransformationMatrix;
-import molecule.Protein;
 
 public class ChainTree {
 	
 	private CTNode root;		// the root node of the tree
 	private Point3d position;	// the position of the left most node in the world
 	private CTLeaf[] backbone;	// the leaf nodes of the tree (the protein backbone) 
+	public Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
+	public Set<Integer> betaSheet = new HashSet<Integer>();		// set of all bonds in beta sheets 
+	
+	private int lastRotatedBond;
 	
 	
 
@@ -28,6 +32,8 @@ public class ChainTree {
 	 */
 	public ChainTree(String pdbId) {
 		this(new PDBParser(pdbId).backbone);
+		this.alphaHelix = new PDBParser(pdbId).alphaHelix;
+		this.betaSheet = new PDBParser(pdbId).betaSheet;
 	}
 	
 	/**
@@ -42,7 +48,7 @@ public class ChainTree {
 	 */
 	public ChainTree(List<Point3d> points, Point3d offset) {
 		this.position = offset;
-		
+				
 		/*
 		 * Create leaf nodes.
 		 */
@@ -55,7 +61,7 @@ public class ChainTree {
 			next = points.get(i);
 			
 			// create new leaf from its relative position to the next leaf
-			this.backbone[i] = new CTLeaf(new Point3d(next.x-current.x, next.y-current.y, next.z-current.z));
+			this.backbone[i] = new CTLeaf(new Point3d(next.x-current.x, next.y-current.y, next.z-current.z), i);
 			
 			current = next;
 		}
@@ -106,6 +112,13 @@ public class ChainTree {
 	}
 	
 	/**
+	 * The length of the backbone.
+	 */
+	public int length() {
+		return this.backbone.length;
+	}
+	
+	/**
 	 * Returns the points of the protein bonds.
 	 * 
 	 * @return The points of the protein bonds.
@@ -130,7 +143,7 @@ import java.util.Arrays;
 	 * @param i The index of the bond.
 	 */
 	public boolean isPeptide(int i) {
-		return false;
+		return i % 3 == 1;
 	}
 	
 	/**
@@ -139,7 +152,7 @@ import java.util.Arrays;
 	 * @param i The index of the bond.
 	 */
 	public boolean isInAlphaHelix(int i) {
-		return false;
+		return this.alphaHelix.contains(i);
 	}
 	
 	/**
@@ -148,7 +161,154 @@ import java.util.Arrays;
 	 * @param i The index of the bond.
 	 */
 	public boolean isInBetaSheet(int i) {
-		return false;
+		return this.betaSheet.contains(i);
+	}
+	
+	/*
+	 * Clash detection stuff.
+	 */
+	
+	/**
+	 * Tests the tree for a self-clash.
+	 * 
+	 * @return true if the tree clashes with it self.
+	 */
+
+	public boolean isClashing() {
+		return isClashing(this.root, this.root);
+	}
+	
+	/**
+	 * Check if the sub-chains of two nodes does clash.
+	 * 
+	 * @param node1 A node to check for overlap.
+	 * @param node2 A node to check for overlap.
+	 * @return true if there is a clash else false
+	 */
+	int indent = 0;
+	private boolean isClashing(CTNode left, CTNode right) {
+		indent++;
+		print(left + " vs " + right);
+
+		// neighbouring atoms may not collide
+		if (left.low + 3 > right.high) {
+			print("neighbours");
+			indent--;
+			return false;
+		}
+		
+		// if no change has occurred between the trees then they have not changed position internal
+		if (!(left.low <= this.lastRotatedBond && this.lastRotatedBond <= right.high)) {
+			print("no change");
+			indent--;
+			return false;
+		}
+		
+		// overlap?
+		boolean overlap = true;
+		if (left.low != right.low) {
+			overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(left.low, right.low)));
+		}
+
+		// if not then break
+		if (!overlap) {
+			print("no overlap");
+			indent--;
+			return false;
+		}
+		
+		// if leaves then report clash
+		if (left.isLeaf() && right.isLeaf()) {
+			error("CLASH");
+			indent--;
+			return true;
+		}
+		
+		// continue search
+		boolean r;
+		if(left.isLeaf()) {
+			print("ll");
+			r = isClashing(left, right.left) || isClashing(left, right.right);
+			
+		} else if (right.isLeaf()) {
+			print("rl");
+			r = isClashing(left.left, right) || isClashing(left.right, right);
+			
+		} else {
+			print("llrl");
+			r = isClashing(left, right.left) || isClashing(left, right.right) ||
+				   isClashing(left.left, right) || isClashing(left.right, right);
+		}
+		
+		indent--;
+		return r;
+	}
+
+	/**
+	 * Calculates the matrix to transform the j-th coordinate system
+	 * into the i-th coordinate system.
+	 * 
+	 * @param i The i-th bond.
+	 * @param j The j-th bond.
+	 * @require i < j
+	 * @return The matrix to transform j into i.
+	 */
+	private TransformationMatrix getTransformationMatrix(int i, int j) {
+		if (j<=i) {
+			throw new IllegalArgumentException(i+"<="+j);
+		}
+
+		CTNode ancestor = this.backbone[i].parent;
+		
+		// find nearest common ancestor
+		while (ancestor.high < j) {
+			ancestor = ancestor.parent;
+		}
+		
+		// if the ancestor exactly covers the nodes then just return it
+		if (ancestor.low == i && ancestor.high == j) {
+			return ancestor.transformationMatrix;
+		}
+		
+		// go down from ancestor to the bonds while building a transformation matrix
+		TransformationMatrix transformationMatrix = new TransformationMatrix();
+		CTNode node;
+			
+		// traverse left subtree of ancestor
+		node = ancestor.left;
+		while (node != null) {
+			if (node.low == i) {
+				transformationMatrix.multL(node.transformationMatrix);
+				node = null;
+			} else {
+				// witch subtree to choose
+				if (i <= node.left.high) { // left
+					transformationMatrix.multL(node.transformationMatrix);
+					node = node.left;
+				} else { // right
+					node = node.right;
+				}
+			}
+		}
+		
+		// traverse right subtree of ancestor
+		node = ancestor.right;
+		while (node != null) {
+			if (node.high == j) {
+				transformationMatrix.multR(node.transformationMatrix);
+				node = null;
+			} else {
+				// witch subtree to choose
+				if (j >= node.right.low) { // right
+					transformationMatrix.multR(node.transformationMatrix);
+					node = node.right;
+				} else { // left
+					node = node.left;
+				}
+			}
+		}
+
+		return transformationMatrix;
 	}
 	
 	/**
@@ -168,24 +328,17 @@ import java.util.Arrays;
 			node = node.parent;
 			node.update();
 		}
+		
+		this.lastRotatedBond = i;
 	}
 	
-	/**
-	 * Returns a set of the points in the protein.
-	 * 
-	 * THIS IS NECCESERY ONLY BECAUSE JAVA REQUIRES THE super CALL TO
-	 * BE THE FIRST IN THE CONSTRUCTOR!
-	 * 
-	 * @param protein The protein to calculate the points for.
-	 * @return The points of the protein.
-	 */
-	private static List<Point3d> extractProteinPoints(Protein protein) {
-		List<Point3d> points = new LinkedList<Point3d>();
-		
-		for (geom3d.Point3d point : protein.getPointSet()) {
-			points.add(new Point3d(point.x, point.y, point.z));
-		}
-		
-		return points;
+	private  void print(String str) {
+		String indent = "";
+		for (int i = 0; i < this.indent; i++) indent += "  ";
+		System.out.println(indent + str);
+	}
+	
+	private  void error(String str) {
+		System.err.println(str);
 	}
 }

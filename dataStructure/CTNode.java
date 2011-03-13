@@ -13,9 +13,10 @@ public class CTNode {
 	private double energy;									// the energy of the current node
 	protected BoundingVolume boundingVolume;				// the bounding volume of the node
 	protected TransformationMatrix transformationMatrix;	// the nodes transformation matrix
-	private int height;										// the height of the nodes subtree
+	protected int height;									// the height of the nodes subtree
+	protected int low, high;								// the lowest and highest covered backbone bond
 	
-	public boolean isLocked;								// is this node locked?
+	public boolean isLocked = false;						// is this node locked?
 	
 	
 	/**
@@ -45,11 +46,20 @@ public class CTNode {
 	
 	
 	/**
+	 * Is this node a leaf?
+	 */
+	public boolean isLeaf() {
+		return this.left == null || this.right == null;
+	}
+	
+	/**
 	 * Updates the information stored in the node.
 	 */
 	public void update() {
 		// compute height from the highest subtree
 		this.height = (this.left.height > this.right.height ? this.left.height : this.right.height) + 1;
+		this.low = this.left.low;
+		this.high = this.right.high;
 		
 		// transformation matrix
 		this.transformationMatrix = new TransformationMatrix(this.left.transformationMatrix, this.right.transformationMatrix);
@@ -96,7 +106,7 @@ public class CTNode {
 	
 	@Override
 	public String toString() {
-		return this.height + "";
+		return "CTNode: " + this.low + "->" + this.high + "=" + this.height;
 	}
 
 }

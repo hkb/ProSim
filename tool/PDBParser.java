@@ -21,6 +21,8 @@ public class PDBParser {
 	public Set<Integer> alphaHelix = new HashSet<Integer>();
 	public Set<Integer> betaSheet = new HashSet<Integer>();
 	
+	private boolean endOfBackbone;
+	
 	
 	/**
 	 * Initialise the parser with the PDB directory.
@@ -41,6 +43,8 @@ public class PDBParser {
 					parseHelix(record);
 				} else if (type.equals("SHEET")) {
 					parseSheet(record);
+				} else if (type.equals("TER")) {
+					parseTer(record);
 				}
 			}
 		} catch (FileNotFoundException e) {
@@ -57,7 +61,7 @@ public class PDBParser {
 		String name = columns(record, 13, 16);
 		
 		// is backbone
-		if(name.charAt(0) == 'N' || name.charAt(0) == 'C' || name.substring(0, 2).equals("CA")) {
+		if(!endOfBackbone && (name.equals("C") || name.equals("N") || name.equals("CA"))) {
 			double x = Double.parseDouble(columns(record, 31, 38));
 			double y = Double.parseDouble(columns(record, 39, 46));
 			double z = Double.parseDouble(columns(record, 47, 54));
@@ -72,7 +76,13 @@ public class PDBParser {
 	 * @param tokens The PDB record.
 	 */
 	private void parseHelix (String record) {
+		int i = Integer.parseInt(columns(record, 22, 25));
+		int j = Integer.parseInt(columns(record, 34, 37));
 		
+		while (i <= j) {
+			this.alphaHelix.add(i);
+			i++;
+		}
 	}
 
 	/**
@@ -81,7 +91,22 @@ public class PDBParser {
 	 * @param tokens The PDB record.
 	 */
 	private void parseSheet (String record) {
+		int i = Integer.parseInt(columns(record, 23, 26));
+		int j = Integer.parseInt(columns(record, 34, 37));
 		
+		while (i <= j) {
+			this.betaSheet.add(i);
+			i++;
+		}
+	}
+	
+	/**
+	 * Parses a TER record
+	 * 
+	 * @param tokens The PDB record.
+	 */
+	private void parseTer (String record) {
+		this.endOfBackbone = true;
 	}
 	
 	/**
@@ -100,6 +125,6 @@ public class PDBParser {
 	 * The records are 1-indexed and both are included.
 	 */
 	private static String columns(String record, int i, int j) {
-		return record.substring(i, j);
+		return record.substring(i, j).trim();
 	}
 }
