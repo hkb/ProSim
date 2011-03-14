@@ -163,10 +163,6 @@ public class ChainTree {
 		return this.betaSheet.contains(i);
 	}
 	
-	/*
-	 * Clash detection stuff.
-	 */
-	
 	/**
 	 * Tests the tree for a self-clash.
 	 * 
@@ -228,6 +224,20 @@ public class ChainTree {
 				return isClashing(left, right.left) || isClashing(left, right.right);
 			}		   
 		}
+	}
+	
+	/**
+	 * Determines if the two nodes has changed internally by the last update,
+	 * @param left
+	 * @param right
+	 * @return
+	 */
+	private boolean hasChanged(CTNode left, CTNode right) {
+		int lastRotatedBond = this.lastRotatedBond;
+		
+		return left.low <= lastRotatedBond && lastRotatedBond <= left.high || 
+			   right.low <= lastRotatedBond && lastRotatedBond <= right.high ||
+			   left.low <= lastRotatedBond && lastRotatedBond <= right.high;
 	}
 
 	/**
