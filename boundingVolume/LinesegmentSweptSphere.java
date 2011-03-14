@@ -29,16 +29,21 @@ public class LinesegmentSweptSphere implements BoundingVolume {
 	}
 
 	@Override
+	public boolean isOverlaping(BoundingVolume other) {
+		return this.volume.overlaps(((LinesegmentSweptSphere) other).volume);
+	}
+	
+	@Override
+	public float volume() {
+		return this.volume.volume();
+	}
+	
+	@Override
 	public BoundingVolume combine(BoundingVolume left, BoundingVolume right) {
 		LinesegmentSweptSphere l = (LinesegmentSweptSphere) left;
 		LinesegmentSweptSphere r = (LinesegmentSweptSphere) right;
 
 		return new LinesegmentSweptSphere(Capsule.createBoundingCapsule_CovarianceFit(l.volume, r.volume));
-	}
-
-	@Override
-	public boolean isOverlaping(BoundingVolume other) {
-		return this.volume.overlaps(((LinesegmentSweptSphere) other).volume);
 	}
 
 	@Override

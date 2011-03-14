@@ -1,7 +1,5 @@
 package math.matrix;
 
-import javax.vecmath.Vector3d;
-
 import edu.math.Vector;
 
 /**

@@ -13,6 +13,13 @@ public interface BoundingVolume {
 	public boolean isOverlaping(BoundingVolume other);
 	
 	/**
+	 * Returns the volume of the bounding volume.
+	 * 
+	 * @return The volume of the bounding volume.
+	 */
+	public float volume();
+	
+	/**
 	 * Computes a new bounding volume containing the combined volumes of the 
 	 * given volumes.
 	 * 

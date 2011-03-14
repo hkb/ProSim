@@ -8,7 +8,6 @@ import java.util.Set;
 
 import javax.vecmath.Point3d;
 
-import tool.BinaryTreePainter;
 import tool.PDBParser;
 
 import math.matrix.TransformationMatrix;
@@ -17,7 +16,8 @@ public class ChainTree {
 	
 	private CTNode root;		// the root node of the tree
 	private Point3d position;	// the position of the left most node in the world
-	private CTLeaf[] backbone;	// the leaf nodes of the tree (the protein backbone) 
+	private CTLeaf[] backboneBonds;	// the leaf nodes of the tree (the bonds of the protein backbone) 
+	
 	public Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
 	public Set<Integer> betaSheet = new HashSet<Integer>();		// set of all bonds in beta sheets 
 	
@@ -52,16 +52,16 @@ public class ChainTree {
 		/*
 		 * Create leaf nodes.
 		 */
-		this.backbone = new CTLeaf[points.size()];
+		this.backboneBonds = new CTLeaf[points.size()-1];
 		
-		Point3d current = offset;
+		Point3d current = points.get(0); // necessary to get relative positions of first element
 		Point3d next;
 		
-		for (int i = 0, j = this.backbone.length; i < j; i++) {
-			next = points.get(i);
+		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
+			next = points.get(i+1);
 			
 			// create new leaf from its relative position to the next leaf
-			this.backbone[i] = new CTLeaf(new Point3d(next.x-current.x, next.y-current.y, next.z-current.z), i);
+			this.backboneBonds[i] = new CTLeaf(new Point3d(next.x-current.x, next.y-current.y, next.z-current.z), i);
 			
 			current = next;
 		}
@@ -77,7 +77,7 @@ public class ChainTree {
 		 * the tree.
 		 */
 		List<CTNode> currentLevel = new LinkedList<CTNode>();
-		for (CTNode l : this.backbone) { currentLevel.add(l); }
+		for (CTNode l : this.backboneBonds) { currentLevel.add(l); }
 		
 		List<CTNode> nextLevel; 
 		
@@ -115,22 +115,21 @@ public class ChainTree {
 	 * The length of the backbone.
 	 */
 	public int length() {
-		return this.backbone.length;
+		return this.backboneBonds.length;
 	}
 	
 	/**
 	 * Returns the points of the protein bonds.
 	 * 
 	 * @return The points of the protein bonds.
-import java.util.Arrays;
 	 */
 	public List<Point3d> getBackbonePoints () {
 		TransformationMatrix transformationMatrix = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
 		
 		List<Point3d> points = new ArrayList<Point3d>();
 		
-		for (int i = 0; i < this.backbone.length; i++) {
-			transformationMatrix.multR(this.backbone[i].transformationMatrix);
+		for (int i = 0; i < this.backboneBonds.length; i++) {
+			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
 			points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
 		}
 
@@ -185,73 +184,50 @@ import java.util.Arrays;
 	 * @param node2 A node to check for overlap.
 	 * @return true if there is a clash else false
 	 */
-	int indent = 0;
-	public int cl1, cl2;
 	private boolean isClashing(CTNode left, CTNode right) {
-		indent++;
-		print(left + " vs " + right);
 
-		// neighbouring atoms may not collide
-		if (Math.abs(right.high - left.low) <= 1) {
-			print("neighbours");
-			indent--;
+		// neighbouring atoms does not cause a clash
+		if (left.isLeaf() && right.isLeaf() && left.low + 1 >= right.high) {
 			return false;
 		}
 		
 		// if no change has occurred between the trees then they have not changed position internal
 		if (!(left.low <= this.lastRotatedBond && this.lastRotatedBond <= right.high)) {
-			print("no change");
-			indent--;
 			return false;
 		}
 		
 		// overlap?
 		boolean overlap = true;
-		if (left.low != right.low) {
-			int l = left.low;
-			int r = right.low;
-			if (r < l) {
-				int t = l;
-				l = r;
-				r = t;
-			}
-			
-			overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(l, r)));
+		if (left.low != right.low) {			
+			overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(left.low, right.low)));
 		}
 
 		// if not then break
 		if (!overlap) {
-			print("no overlap");
-			indent--;
 			return false;
 		}
 		
 		// if leaves then report clash
 		if (left.isLeaf() && right.isLeaf()) {
-			cl1 = left.low; cl2 = right.low;
-			error("CLASH");
-			indent--;
 			return true;
 		}
 		
 		// continue search
-		boolean r;
 		if(left.isLeaf()) {
-			print("ll");
-			r = isClashing(left, right.left) || isClashing(left, right.right);
+			return isClashing(left, right.left) || isClashing(left, right.right);
 			
 		} else if (right.isLeaf()) {
-			print("rl");
-			r = isClashing(left.left, right) || isClashing(left.right, right);
+			return isClashing(left.left, right) || isClashing(left.right, right);
 			
 		} else {
-			print("llrl");
-			r = isClashing(left, right.left) || isClashing(left, right.right) ||
-				   isClashing(left.left, right) || isClashing(left.right, right);
+			// only split the larger volume
+			// TODO WHY DOES THIS WORK?!
+			if (left.boundingVolume.volume() > right.boundingVolume.volume()) {
+				return isClashing(left.left, right) || isClashing(left.right, right);
+			} else {
+				return isClashing(left, right.left) || isClashing(left, right.right);
+			}		   
 		}
-		
-		indent--;
-		return r;
 	}
 
 	/**
@@ -269,31 +245,32 @@ import java.util.Arrays;
 		}
 		
 		// find nearest common ancestor
-		CTNode ancestor = this.backbone[i].parent;
+		CTNode ancestor = this.backboneBonds[i].parent;
 		
-		while (ancestor.high < j) { // TODO what does j-1 imply??
+		while (ancestor.high < j) {
 			ancestor = ancestor.parent;
 		}
 		
 		// if the ancestor exactly covers the nodes then just return it
 		if (ancestor.low == i && ancestor.high == j) {
-			return ancestor.transformationMatrix;
+			return new TransformationMatrix(ancestor.transformationMatrix);
 		}
 		
 		// go down from ancestor to the bonds while building a transformation matrix
+		// TODO understand this section!!
 		TransformationMatrix transformationMatrix = new TransformationMatrix();
 		CTNode node;
-			
+		
 		// traverse left subtree of ancestor
 		node = ancestor.left;
 		while (node != null) {
 			if (node.low == i) {
 				transformationMatrix.multL(node.transformationMatrix);
-				node = null;
+				break;
 			} else {
 				// witch subtree to choose
 				if (i <= node.left.high) { // left
-					transformationMatrix.multL(node.transformationMatrix);
+					transformationMatrix.multL(node.right.transformationMatrix);
 					node = node.left;
 				} else { // right
 					node = node.right;
@@ -306,11 +283,11 @@ import java.util.Arrays;
 		while (node != null) {
 			if (node.high == j) {
 				transformationMatrix.multR(node.transformationMatrix);
-				node = null;
+				break;
 			} else {
 				// witch subtree to choose
 				if (j >= node.right.low) { // right
-					transformationMatrix.multR(node.transformationMatrix);
+					transformationMatrix.multR(node.left.transformationMatrix);
 					node = node.right;
 				} else { // left
 					node = node.left;
@@ -329,10 +306,10 @@ import java.util.Arrays;
 	 */
 	public void changeRotationAngle(int i, double angle) {
 		// update the bonds transformation matrix
-		this.backbone[i].rotate(angle);
+		this.backboneBonds[i].rotate(angle);
 		
 		// propagate changes up thought the tree
-		CTNode node = this.backbone[i];
+		CTNode node = this.backboneBonds[i];
 		
 		while(node.parent != null) {
 			node = node.parent;
@@ -340,17 +317,5 @@ import java.util.Arrays;
 		}
 		
 		this.lastRotatedBond = i;
-	}
-	
-	private  void print(String str) {
-		/*
-		String indent = "";
-		for (int i = 0; i < this.indent; i++) indent += "  ";
-		System.out.println(indent + str);
-		*/
-	}
-	
-	private  void error(String str) {
-		System.err.println(str);
 	}
 }

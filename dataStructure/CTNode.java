@@ -1,7 +1,5 @@
 package dataStructure;
 
-import java.util.Stack;
-
 import energyFunction.EnergyFunction;
 
 import math.matrix.TransformationMatrix;
@@ -11,10 +9,11 @@ public class CTNode {
 	
 	protected CTNode left, right, parent;					// connected nodes in the tree
 	private double energy;									// the energy of the current node
-	protected BoundingVolume boundingVolume;				// the bounding volume of the node
+	public BoundingVolume boundingVolume;				// the bounding volume of the node
 	protected TransformationMatrix transformationMatrix;	// the nodes transformation matrix
 	protected int height;									// the height of the nodes subtree
-	protected int low, high;								// the lowest and highest covered backbone bond
+	public int low;								// the lowest and highest covered backbone bond
+	protected int high;
 	
 	public boolean isLocked = false;						// is this node locked?
 	

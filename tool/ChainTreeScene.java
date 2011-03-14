@@ -42,6 +42,7 @@ public class ChainTreeScene {
 	 */
 	public ChainTreeScene() {
 		this.scene.setBackgroundColor(Color.DARK_GRAY);
+		this.scene.setAxisEnabled(true);
 	}
 	
 	/**
@@ -105,7 +106,7 @@ public class ChainTreeScene {
 				}
 				
 				this.scene.addShape(node.sphere, this.colorAtom);
-				//this.scene.addShape(node.cylinder, bondColor);
+				this.scene.addShape(node.cylinder, bondColor);
 			}
 			
 			// store the chain tree GUI info
@@ -157,8 +158,8 @@ public class ChainTreeScene {
 		
 		public void update(Point3d current, Point3d next) {
 			this.sphere.center = this.pointToVector(next);
-			//this.cylinder.p1 = this.pointToVector(current);
-			//this.cylinder.p2 = this.pointToVector(next);		
+			this.cylinder.p1 = this.pointToVector(current);
+			this.cylinder.p2 = this.pointToVector(next);		
 		}
 		
 		private Vector pointToVector(Point3d point) {
