@@ -186,12 +186,13 @@ import java.util.Arrays;
 	 * @return true if there is a clash else false
 	 */
 	int indent = 0;
+	public int cl1, cl2;
 	private boolean isClashing(CTNode left, CTNode right) {
 		indent++;
 		print(left + " vs " + right);
 
 		// neighbouring atoms may not collide
-		if (left.low + 3 > right.high) {
+		if (Math.abs(right.high - left.low) <= 1) {
 			print("neighbours");
 			indent--;
 			return false;
@@ -207,7 +208,15 @@ import java.util.Arrays;
 		// overlap?
 		boolean overlap = true;
 		if (left.low != right.low) {
-			overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(left.low, right.low)));
+			int l = left.low;
+			int r = right.low;
+			if (r < l) {
+				int t = l;
+				l = r;
+				r = t;
+			}
+			
+			overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(l, r)));
 		}
 
 		// if not then break
@@ -219,6 +228,7 @@ import java.util.Arrays;
 		
 		// if leaves then report clash
 		if (left.isLeaf() && right.isLeaf()) {
+			cl1 = left.low; cl2 = right.low;
 			error("CLASH");
 			indent--;
 			return true;
@@ -257,11 +267,11 @@ import java.util.Arrays;
 		if (j<=i) {
 			throw new IllegalArgumentException(i+"<="+j);
 		}
-
-		CTNode ancestor = this.backbone[i].parent;
 		
 		// find nearest common ancestor
-		while (ancestor.high < j) {
+		CTNode ancestor = this.backbone[i].parent;
+		
+		while (ancestor.high < j) { // TODO what does j-1 imply??
 			ancestor = ancestor.parent;
 		}
 		
@@ -333,9 +343,11 @@ import java.util.Arrays;
 	}
 	
 	private  void print(String str) {
+		/*
 		String indent = "";
 		for (int i = 0; i < this.indent; i++) indent += "  ";
 		System.out.println(indent + str);
+		*/
 	}
 	
 	private  void error(String str) {

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.vecmath.Point3d;
 
+import dataStructure.CTLeaf;
 import dataStructure.ChainTree;
 import edu.geom3D.Cylinder;
 import edu.geom3D.Sphere;
@@ -21,7 +22,7 @@ import edu.math.Vector;
  */
 public class ChainTreeScene {
 	
-	private J3DScene scene = J3DScene.createJ3DSceneInFrame();
+	public J3DScene scene = J3DScene.createJ3DSceneInFrame();
 	private Map<ChainTree,GUINode[]> cTrees = new HashMap<ChainTree,GUINode[]>();
 	
 	/*
@@ -104,7 +105,7 @@ public class ChainTreeScene {
 				}
 				
 				this.scene.addShape(node.sphere, this.colorAtom);
-				this.scene.addShape(node.cylinder, bondColor);
+				//this.scene.addShape(node.cylinder, bondColor);
 			}
 			
 			// store the chain tree GUI info
@@ -147,7 +148,7 @@ public class ChainTreeScene {
 	 * of an backbone element. 
 	 */
 	private class GUINode {
-		public Sphere sphere = new Sphere(new Vector(0,0,0), 0.85f);
+		public Sphere sphere = new Sphere(new Vector(0,0,0), (float) CTLeaf.atomRadius/2);
 		public Cylinder cylinder = new Cylinder(new Vector(0,0,0), new Vector(0,0,0), 0.4f);
 		
 		public GUINode(Point3d current, Point3d next) {
@@ -156,8 +157,8 @@ public class ChainTreeScene {
 		
 		public void update(Point3d current, Point3d next) {
 			this.sphere.center = this.pointToVector(next);
-			this.cylinder.p1 = this.pointToVector(current);
-			this.cylinder.p2 = this.pointToVector(next);		
+			//this.cylinder.p1 = this.pointToVector(current);
+			//this.cylinder.p2 = this.pointToVector(next);		
 		}
 		
 		private Vector pointToVector(Point3d point) {

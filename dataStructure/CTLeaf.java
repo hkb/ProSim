@@ -8,7 +8,7 @@ import math.matrix.TransformationMatrix;
 
 public class CTLeaf extends CTNode {
 	
-	public double atomRadius = 1.7;
+	public static double atomRadius = 1.7;
 	private double angle;	// the rotation angle of this bond
 	
 	/**
@@ -25,7 +25,7 @@ public class CTLeaf extends CTNode {
 		this.transformationMatrix = new TransformationMatrix(relativePosition.x, relativePosition.y, relativePosition.z);
 		
 		// bounding volume
-		this.boundingVolume = new LinesegmentSweptSphere(relativePosition, this.atomRadius);
+		this.boundingVolume = new LinesegmentSweptSphere(relativePosition, atomRadius/2);
 	}
 	
 	
