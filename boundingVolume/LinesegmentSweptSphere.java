@@ -12,7 +12,7 @@ public class LinesegmentSweptSphere implements BoundingVolume {
 	private Capsule volume;	// the volume
 	
 	/**
-	 * Create a new linesegment swept sphere bounding volume.
+	 * Create a new line segment swept sphere bounding volume.
 	 * 
 	 * @param line The line of the volume.
 	 * @param radius The radius around the line.
@@ -43,7 +43,7 @@ public class LinesegmentSweptSphere implements BoundingVolume {
 		LinesegmentSweptSphere l = (LinesegmentSweptSphere) left;
 		LinesegmentSweptSphere r = (LinesegmentSweptSphere) right;
 
-		return new LinesegmentSweptSphere(Capsule.createBoundingCapsule_CovarianceFit(l.volume, r.volume));
+		return new LinesegmentSweptSphere(Capsule.createBoundingCapsule_MaxDist(l.volume, r.volume));
 	}
 
 	@Override

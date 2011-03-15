@@ -31,16 +31,6 @@ public class CTLeaf extends CTNode {
 	
 	
 	/**
-	 * Returns the position of the leaf.
-	 * 
-	 * @return The position of the leaf.
-	 */
-	public Point3d getPosition() {
-		TransformationMatrix m = this.transformationMatrix;
-		return new Point3d(m.a14, m.a24, m.a34);
-	}
-
-	/**
 	 * Rotates the bond by the given angle.
 	 * 
 	 * @param angle The angle to rotate with.

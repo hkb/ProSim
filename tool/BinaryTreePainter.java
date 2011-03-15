@@ -79,7 +79,7 @@ public class BinaryTreePainter extends JFrame{
 		
 		@Override
 		public String toString() {
-			return this.node.toString();
+			return "";//this.node.toString();
 		}
 	}
 	

@@ -9,11 +9,10 @@ public class CTNode {
 	
 	protected CTNode left, right, parent;					// connected nodes in the tree
 	private double energy;									// the energy of the current node
-	public BoundingVolume boundingVolume;				// the bounding volume of the node
+	public BoundingVolume boundingVolume;					// the bounding volume of the node
 	protected TransformationMatrix transformationMatrix;	// the nodes transformation matrix
 	protected int height;									// the height of the nodes subtree
-	public int low;								// the lowest and highest covered backbone bond
-	protected int high;
+	protected int low, high;								// the lowest and highest covered backbone bond
 	
 	public boolean isLocked = false;						// is this node locked?
 	
@@ -31,6 +30,11 @@ public class CTNode {
 		
 		left.parent = this;
 		right.parent = this;
+		
+		// compute height and backbone span
+		this.height = Math.max(this.left.height, this.right.height) + 1;
+		this.low = this.left.low;
+		this.high = this.right.high;
 		
 		this.update();
 	}
@@ -55,16 +59,14 @@ public class CTNode {
 	 * Updates the information stored in the node.
 	 */
 	public void update() {
-		// compute height from the highest subtree
-		this.height = (this.left.height > this.right.height ? this.left.height : this.right.height) + 1;
-		this.low = this.left.low;
-		this.high = this.right.high;
-		
 		// transformation matrix
 		this.transformationMatrix = new TransformationMatrix(this.left.transformationMatrix, this.right.transformationMatrix);
 
 		// bounding volume
 		this.boundingVolume = this.left.boundingVolume.combine(this.left.boundingVolume, this.right.boundingVolume.transform(this.transformationMatrix));
+		
+		// sub chain energy
+		this.energy = this.left.energy + this.right.energy;
 	}
 	
 	/**
@@ -92,6 +94,38 @@ public class CTNode {
 	 */
 	public int getHeight() {
 		return this.height;
+	}
+	
+	/**
+	 * Sets the left child and preserve invariants.
+	 */
+	protected void setLeft(CTNode node) {
+		this.left = node;
+		this.low = node.low;
+		
+		if (node.height >= this.height)
+			this.height = node.height + 1;
+	}
+	
+	/**
+	 * Sets the right child and preserve invariants.
+	 */
+	protected void setRight(CTNode node) {
+		this.right = node;
+		this.high = node.high;
+		
+		if (node.height >= this.height)
+			this.height = node.height + 1;
+	}
+	
+	/**
+	 * Is the i-th bond in the sub chain represented covered by the node.
+	 * 
+	 * @param i The bond number.
+	 * @return true if the bond is in the sub chain else false.
+	 */
+	public boolean inSubChain(int i) {
+		return this.low <= i && i <= this.high;
 	}
 	
 	/**

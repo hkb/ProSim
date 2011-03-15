@@ -1,5 +1,7 @@
 package tool;
 
+import j3dScene.J3DScene;
+
 import java.awt.Color;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,8 +14,9 @@ import dataStructure.CTLeaf;
 import dataStructure.ChainTree;
 import edu.geom3D.Cylinder;
 import edu.geom3D.Sphere;
-import edu.j3dScene.J3DScene;
 import edu.math.Vector;
+import geom3d.Cylinder3d;
+import geom3d.Sphere3d;
 
 /**
  * A 3D scene for painting multiple ChainTrees
@@ -22,16 +25,17 @@ import edu.math.Vector;
  */
 public class ChainTreeScene {
 	
-	public J3DScene scene = J3DScene.createJ3DSceneInFrame();
+	private J3DScene scene = J3DScene.createJ3DSceneInFrame();
 	private Map<ChainTree,GUINode[]> cTrees = new HashMap<ChainTree,GUINode[]>();
 	
 	/*
 	 * Colours of the different part of the protein backbone.
 	 */
-	public Color colorAtom = new Color(0, 0, 255, 100);
-	public Color colorBond = Color.CYAN;
-	
-	public Color colorPeptideBond = new Color(169, 169, 169, 210);
+	public Color colorAtom = new Color(169, 169, 169, 100);
+	public Color[] colorBonds = {new Color(0, 0, 255, 100),
+								 new Color(0, 0, 100, 100),
+								 new Color(169, 169, 169, 100)};
+
 	public Color colorAlphaHelix = new Color(255, 255, 0, 255);
 	public Color colourBetaSheet = new Color(0, 255, 0, 255);
 	
@@ -41,8 +45,7 @@ public class ChainTreeScene {
 	 * Create a new empty scene.
 	 */
 	public ChainTreeScene() {
-		this.scene.setBackgroundColor(Color.DARK_GRAY);
-		this.scene.setAxisEnabled(true);
+		this.scene.setBackgroundColor(Color.WHITE);
 	}
 	
 	/**
@@ -99,12 +102,10 @@ public class ChainTreeScene {
 					bondColor = this.colorAlphaHelix;
 				} else if (cTree.isInBetaSheet(i)) {
 					bondColor = this.colourBetaSheet;
-				} else if (cTree.isPeptide(i)) {
-					bondColor = this.colorPeptideBond;
 				} else {
-					bondColor = this.colorBond;
+					bondColor = this.colorBonds[i%3];
 				}
-				
+
 				this.scene.addShape(node.sphere, this.colorAtom);
 				this.scene.addShape(node.cylinder, bondColor);
 			}
@@ -148,6 +149,7 @@ public class ChainTreeScene {
 	 * Private class to store information about the graphical representation 
 	 * of an backbone element. 
 	 */
+/*
 	private class GUINode {
 		public Sphere sphere = new Sphere(new Vector(0,0,0), (float) CTLeaf.atomRadius/2);
 		public Cylinder cylinder = new Cylinder(new Vector(0,0,0), new Vector(0,0,0), 0.4f);
@@ -160,6 +162,25 @@ public class ChainTreeScene {
 			this.sphere.center = this.pointToVector(next);
 			this.cylinder.p1 = this.pointToVector(current);
 			this.cylinder.p2 = this.pointToVector(next);		
+		}
+		
+		private Vector pointToVector(Point3d point) {
+			return new Vector(point.x, point.y, point.z);
+		}
+	}
+*/
+	private class GUINode {
+		public Sphere3d sphere = new Sphere3d(new geom3d.Point3d(0,0,0), CTLeaf.atomRadius/2);
+		public Cylinder3d cylinder = new Cylinder3d(new geom3d.Point3d(0,0,0), new geom3d.Point3d(0,0,0), 0.4f);
+		
+		public GUINode(Point3d current, Point3d next) {
+			this.update(current, next);
+		}
+		
+		public void update(Point3d current, Point3d next) {
+			this.sphere.center = new geom3d.Point3d(next.x, next.y, next.z);
+			this.cylinder.getSegment().setA(new geom3d.Point3d(current.x, current.y, current.z));
+			this.cylinder.getSegment().setB(new geom3d.Point3d(next.x, next.y, next.z));		
 		}
 		
 		private Vector pointToVector(Point3d point) {

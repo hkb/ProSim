@@ -14,20 +14,20 @@ import math.matrix.TransformationMatrix;
 
 public class ChainTree {
 	
-	private CTNode root;		// the root node of the tree
-	private Point3d position;	// the position of the left most node in the world
-	private CTLeaf[] backboneBonds;	// the leaf nodes of the tree (the bonds of the protein backbone) 
+	protected CTNode root;				// the root node of the tree
+	private Point3d position;			// the position of the left most node in the world
+	protected CTLeaf[] backboneBonds;	// the leaf nodes of the tree (the bonds of the protein backbone) 
 	
-	public Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
-	public Set<Integer> betaSheet = new HashSet<Integer>();		// set of all bonds in beta sheets 
+	protected Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
+	protected Set<Integer> betaSheet = new HashSet<Integer>();	// set of all bonds in beta sheets 
 	
-	private int lastRotatedBond;
+	private int lastRotatedBond;	// the last rotated bond
 	
 	
 
 	/**
 	 * Create a chain tree from its PDB id.
-	 * Protein(pdbId, 2, true)
+	 * 
 	 * @param pdbId The PDB id to create a chain tree for.
 	 */
 	public ChainTree(String pdbId) {
@@ -38,23 +38,18 @@ public class ChainTree {
 	
 	/**
 	 * Creates a chain tree from a list of 3D points.
+	 * 
+	 * @param points The points of the protein backbone atoms.
 	 */
 	public ChainTree(List<Point3d> points) {
-		this(points, new Point3d(0, 0, 0));
-	}
-	
-	/**
-	 * Creates a chain tree from a list of 3D points with a given offset.
-	 */
-	public ChainTree(List<Point3d> points, Point3d offset) {
-		this.position = offset;
+		this.position = points.get(0);
 				
 		/*
 		 * Create leaf nodes.
 		 */
 		this.backboneBonds = new CTLeaf[points.size()-1];
 		
-		Point3d current = points.get(0); // necessary to get relative positions of first element
+		Point3d current = this.position; // necessary to get relative positions of first element
 		Point3d next;
 		
 		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
@@ -137,15 +132,6 @@ public class ChainTree {
 	}
 	
 	/**
-	 * Is the bond an peptide bond?
-	 * 
-	 * @param i The index of the bond.
-	 */
-	public boolean isPeptide(int i) {
-		return i % 3 == 1;
-	}
-	
-	/**
 	 * Is the bond part of a alpha helix.
 	 * 
 	 * @param i The index of the bond.
@@ -181,32 +167,28 @@ public class ChainTree {
 	 * @return true if there is a clash else false
 	 */
 	private boolean isClashing(CTNode left, CTNode right) {
-
-		// neighbouring atoms does not cause a clash
-		if (left.isLeaf() && right.isLeaf() && left.low + 1 >= right.high) {
+		
+		// NOTE: This is a purely technical check to avoid double check of the same subtrees
+		if (right.low < left.low)
 			return false;
-		}
+		
+		// neighbouring atoms does not cause a clash
+		if (left.isLeaf() && right.isLeaf() && left.low + 1 >= right.high)
+			return false;
 		
 		// if no change has occurred between the trees then they have not changed position internal
-		if (!(left.low <= this.lastRotatedBond && this.lastRotatedBond <= right.high)) {
+		if (!this.hasChanged(left, right))
 			return false;
-		}
 		
-		// overlap?
-		boolean overlap = true;
-		if (left.low != right.low) {			
-			overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(left.low, right.low)));
-		}
+		// check for overlap
+		boolean overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(left.low, right.low)));
 
-		// if not then break
-		if (!overlap) {
+		if (!overlap)
 			return false;
-		}
 		
 		// if leaves then report clash
-		if (left.isLeaf() && right.isLeaf()) {
+		if (left.isLeaf() && right.isLeaf())
 			return true;
-		}
 		
 		// continue search
 		if(left.isLeaf()) {
@@ -227,17 +209,23 @@ public class ChainTree {
 	}
 	
 	/**
-	 * Determines if the two nodes has changed internally by the last update,
-	 * @param left
-	 * @param right
-	 * @return
+	 * Determines if the two sub chains has changed internally by the last update.
+	 * 
+	 * @param left The left most sub chain.
+	 * @param right The rightmost sub chain.
+	 * @require left.low <= right.low
+	 * @return true if a bond affecting the subtrees has changed
 	 */
 	private boolean hasChanged(CTNode left, CTNode right) {
+		if (right.low < left.low) {
+			throw new IllegalArgumentException("Invalid argument order!");
+		}
+		
 		int lastRotatedBond = this.lastRotatedBond;
 		
-		return left.low <= lastRotatedBond && lastRotatedBond <= left.high || 
-			   right.low <= lastRotatedBond && lastRotatedBond <= right.high ||
-			   left.low <= lastRotatedBond && lastRotatedBond <= right.high;
+		return (left.low <= lastRotatedBond && lastRotatedBond <= left.high) ||   // in left subtree
+			   (right.low <= lastRotatedBond && lastRotatedBond <= right.high) || // in right subtree
+			   (left.low <= lastRotatedBond && lastRotatedBond <= right.high);    // between left and right subtree
 	}
 
 	/**
@@ -250,8 +238,13 @@ public class ChainTree {
 	 * @return The matrix to transform j into i.
 	 */
 	private TransformationMatrix getTransformationMatrix(int i, int j) {
-		if (j<=i) {
-			throw new IllegalArgumentException(i+"<="+j);
+		if (j < i) {
+			throw new IllegalArgumentException("i ("+i+") must be less than or equal to j ("+j+")");
+		}
+		
+		// unit transformation
+		if (i == j) {
+			return new TransformationMatrix();
 		}
 		
 		// find nearest common ancestor
@@ -315,11 +308,13 @@ public class ChainTree {
 	 * @param angle The angle to rotate the bond by.
 	 */
 	public void changeRotationAngle(int i, double angle) {
+		CTLeaf bond = this.backboneBonds[i];
+		
 		// update the bonds transformation matrix
-		this.backboneBonds[i].rotate(angle);
+		bond.rotate(angle);
 		
 		// propagate changes up thought the tree
-		CTNode node = this.backboneBonds[i];
+		CTNode node = (CTNode) bond;
 		
 		while(node.parent != null) {
 			node = node.parent;

@@ -72,8 +72,8 @@ public class PDBParser {
 	 * @param tokens The PDB record.
 	 */
 	private void parseHelix (String record) {
-		int i = Integer.parseInt(columns(record, 22, 25));
-		int j = Integer.parseInt(columns(record, 34, 37));
+		int i = Integer.parseInt(columns(record, 22, 25)) * 3;
+		int j = Integer.parseInt(columns(record, 34, 37)) * 3;
 		
 		while (i <= j) {
 			this.alphaHelix.add(i);
@@ -87,8 +87,8 @@ public class PDBParser {
 	 * @param tokens The PDB record.
 	 */
 	private void parseSheet (String record) {
-		int i = Integer.parseInt(columns(record, 23, 26));
-		int j = Integer.parseInt(columns(record, 34, 37));
+		int i = Integer.parseInt(columns(record, 23, 26)) * 3;
+		int j = Integer.parseInt(columns(record, 34, 37)) * 3;
 		
 		while (i <= j) {
 			this.betaSheet.add(i);

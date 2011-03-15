@@ -1,9 +1,11 @@
 package test;
 
 import java.io.IOException;
+import java.util.List;
 
 import tool.ChainTreeScene;
 
+import dataStructure.AdjustableChainTree;
 import dataStructure.ChainTree;
 
 public class BuildChainTree {
@@ -15,12 +17,13 @@ public class BuildChainTree {
 	 */
 	public static void main(String[] args) throws InterruptedException, IOException {
 
-		ChainTree cTree = new ChainTree("1PUX");
+		AdjustableChainTree cTree = new AdjustableChainTree("1PUX");
+		List<Integer> rotateableBonds = cTree.rotatableBonds(); 
 
 		ChainTreeScene scene = new ChainTreeScene(cTree);
-				
+		
 		while(true) {
-			int i = (int) (Math.random() * cTree.length());
+			int i = rotateableBonds.get((int) (Math.random() * rotateableBonds.size()));
 			double angle = (Math.random()-0.5)*15*(Math.PI/180);
 			
 			System.out.println(i + " - " + angle);
