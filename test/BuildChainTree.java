@@ -22,7 +22,10 @@ public class BuildChainTree {
 
 		ChainTreeScene scene = new ChainTreeScene(cTree);
 		
-		while(true) {
+		cTree.unfold();
+		
+		
+		while(Math.random() == 0.4916234124124) {
 			int i = rotateableBonds.get((int) (Math.random() * rotateableBonds.size()));
 			double angle = (Math.random()-0.5)*15*(Math.PI/180);
 			

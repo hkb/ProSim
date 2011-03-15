@@ -28,8 +28,6 @@ public class CTLeaf extends CTNode {
 		this.boundingVolume = new LinesegmentSweptSphere(relativePosition, atomRadius/2);
 	}
 	
-	
-	
 	/**
 	 * Rotates the bond by the given angle.
 	 * 
@@ -42,6 +40,6 @@ public class CTLeaf extends CTNode {
 	
 	@Override
 	public String toString() {
-		return "CTLeaf: " + this.low;
+		return ""+this.low;
 	}
 }

@@ -1,5 +1,6 @@
 package math.matrix;
 
+import matrix.RotationMatrix4x4;
 import edu.math.Vector;
 
 /**
@@ -87,6 +88,24 @@ public class TransformationMatrix {
 		a33 = l.a31*r.a13 + l.a32*r.a23 + l.a33*r.a33;
 		a34 = l.a31*r.a14 + l.a32*r.a24 + l.a33*r.a34 + l.a34;
 
+	}
+	
+	/*
+	 * Rotation matrices l and r are multipied and the result is saved in the rotation matrix m
+	 */
+	public static void mult(TransformationMatrix l, TransformationMatrix r, TransformationMatrix m) {
+		m.a11 = l.a11*r.a11 + l.a12*r.a21 + l.a13*r.a31;
+		m.a12 = l.a11*r.a12 + l.a12*r.a22 + l.a13*r.a32;
+		m.a13 = l.a11*r.a13 + l.a12*r.a23 + l.a13*r.a33;
+		m.a14 = l.a11*r.a14 + l.a12*r.a24 + l.a13*r.a34 + l.a14;
+		m.a21 = l.a21*r.a11 + l.a22*r.a21 + l.a23*r.a31;
+		m.a22 = l.a21*r.a12 + l.a22*r.a22 + l.a23*r.a32;
+		m.a23 = l.a21*r.a13 + l.a22*r.a23 + l.a23*r.a33;
+		m.a24 = l.a21*r.a14 + l.a22*r.a24 + l.a23*r.a34 + l.a24;
+		m.a31 = l.a31*r.a11 + l.a32*r.a21 + l.a33*r.a31;
+		m.a32 = l.a31*r.a12 + l.a32*r.a22 + l.a33*r.a32;
+		m.a33 = l.a31*r.a13 + l.a32*r.a23 + l.a33*r.a33;
+		m.a34 = l.a31*r.a14 + l.a32*r.a24 + l.a33*r.a34 + l.a34;
 	}
 
 

@@ -25,19 +25,18 @@ import geom3d.Sphere3d;
  */
 public class ChainTreeScene {
 	
-	private J3DScene scene = J3DScene.createJ3DSceneInFrame();
+	public J3DScene scene = J3DScene.createJ3DSceneInFrame();
 	private Map<ChainTree,GUINode[]> cTrees = new HashMap<ChainTree,GUINode[]>();
 	
 	/*
 	 * Colours of the different part of the protein backbone.
 	 */
-	public Color colorAtom = new Color(169, 169, 169, 100);
-	public Color[] colorBonds = {new Color(0, 0, 255, 100),
-								 new Color(0, 0, 100, 100),
-								 new Color(169, 169, 169, 100)};
+	public Color[] colorBackbone = {new Color(0, 180, 180),
+							     	new Color(0, 0, 100, 100),
+							     	new Color(180, 180, 180)};
 
-	public Color colorAlphaHelix = new Color(255, 255, 0, 255);
-	public Color colourBetaSheet = new Color(0, 255, 0, 255);
+	public Color colorAlphaHelix = new Color(255, 255, 0);
+	public Color colourBetaSheet = new Color(0, 255, 0);
 	
 	
 	
@@ -97,17 +96,18 @@ public class ChainTreeScene {
 				guiNodes[i] = node;
 				
 				// add GUI elements to scene
-				Color bondColor;
+				Color color;
 				if (cTree.isInAlphaHelix(i)) {
-					bondColor = this.colorAlphaHelix;
+					color = this.colorAlphaHelix;
 				} else if (cTree.isInBetaSheet(i)) {
-					bondColor = this.colourBetaSheet;
+					color = this.colourBetaSheet;
 				} else {
-					bondColor = this.colorBonds[i%3];
+					color = this.colorBackbone[i%3];
 				}
-
-				this.scene.addShape(node.sphere, this.colorAtom);
-				this.scene.addShape(node.cylinder, bondColor);
+				
+				// draw shapes
+				this.scene.addShape(node.sphere, new Color(color.getRed(), color.getGreen(), color.getBlue(), 100));
+				this.scene.addShape(node.cylinder, color);
 			}
 			
 			// store the chain tree GUI info

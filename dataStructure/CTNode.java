@@ -8,8 +8,8 @@ import boundingVolume.BoundingVolume;
 public class CTNode {
 	
 	protected CTNode left, right, parent;					// connected nodes in the tree
-	private double energy;									// the energy of the current node
-	public BoundingVolume boundingVolume;					// the bounding volume of the node
+	protected double energy;								// the energy of the current node
+	protected BoundingVolume boundingVolume;				// the bounding volume of the node
 	protected TransformationMatrix transformationMatrix;	// the nodes transformation matrix
 	protected int height;									// the height of the nodes subtree
 	protected int low, high;								// the lowest and highest covered backbone bond
@@ -35,7 +35,7 @@ public class CTNode {
 		this.height = Math.max(this.left.height, this.right.height) + 1;
 		this.low = this.left.low;
 		this.high = this.right.high;
-		
+
 		this.update();
 	}
 	
@@ -68,7 +68,7 @@ public class CTNode {
 		// sub chain energy
 		this.energy = this.left.energy + this.right.energy;
 	}
-	
+
 	/**
 	 * Gets the left child.
 	 * 
@@ -97,38 +97,6 @@ public class CTNode {
 	}
 	
 	/**
-	 * Sets the left child and preserve invariants.
-	 */
-	protected void setLeft(CTNode node) {
-		this.left = node;
-		this.low = node.low;
-		
-		if (node.height >= this.height)
-			this.height = node.height + 1;
-	}
-	
-	/**
-	 * Sets the right child and preserve invariants.
-	 */
-	protected void setRight(CTNode node) {
-		this.right = node;
-		this.high = node.high;
-		
-		if (node.height >= this.height)
-			this.height = node.height + 1;
-	}
-	
-	/**
-	 * Is the i-th bond in the sub chain represented covered by the node.
-	 * 
-	 * @param i The bond number.
-	 * @return true if the bond is in the sub chain else false.
-	 */
-	public boolean inSubChain(int i) {
-		return this.low <= i && i <= this.high;
-	}
-	
-	/**
 	 * Computes the energy of the node.
 	 * 
 	 * @param energyFunction
@@ -139,7 +107,7 @@ public class CTNode {
 	
 	@Override
 	public String toString() {
-		return "CTNode: " + this.low + "->" + this.high + "=" + this.height;
+		return this.low+"-"+this.high;
 	}
 
 }
