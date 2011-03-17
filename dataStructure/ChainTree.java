@@ -55,6 +55,8 @@ public class ChainTree {
 		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
 			end = points.get(i+1);
 			
+			System.out.println(start + " -> " + end +" = " + new Point3d(end.x-start.x, end.y-start.y, end.z-start.z));
+			
 			// create new leaf from its relative position to the next leaf
 			this.backboneBonds[i] = new CTLeaf(new Point3d(end.x-start.x, end.y-start.y, end.z-start.z), i);
 			
@@ -118,7 +120,7 @@ public class ChainTree {
 	 * 
 	 * @return The points of the protein bonds.
 	 */
-	public List<Point3d> getBackbonePoints () {
+	public List<Point3d> getBackboneAtomPoints () {
 		TransformationMatrix transformationMatrix = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
 		
 		List<Point3d> points = new ArrayList<Point3d>();

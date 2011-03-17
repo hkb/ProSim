@@ -30,7 +30,7 @@ public class AdjustableChainTreeDebugger {
 		
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		
-		//new BinaryTreePainter(cTree);
+		new BinaryTreePainter(cTree);
 
 		
 		ChainTreeScene scene = new ChainTreeScene(cTree);
@@ -77,7 +77,7 @@ public class AdjustableChainTreeDebugger {
 			
 		Capsule vol = ((LinesegmentSweptSphere) node.boundingVolume.transform(t)).volume;
 
-		Color color = (node.isLocked) ? new Color(255,0,0,100) : new Color(0,0,255,100);
+		Color color = (node.isLocked) ? new Color(255,0,0) : new Color(0,0,255);
 		scene.scene.addShape(new Capsule3d(new Point3d(vol.p1.x(), vol.p1.y(), vol.p1.z()), new Point3d(vol.p2.x(), vol.p2.y(), vol.p2.z()), vol.rad), color);
 	}
 }

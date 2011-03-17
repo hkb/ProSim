@@ -21,6 +21,8 @@ import tool.BinaryTreePainter;
 
 public class AdjustableChainTree extends ChainTree {
 	
+	private List<CTNode> lockedSubtrees = new LinkedList<CTNode>();
+	
 	/**
 	 * Create a chain tree from its PDB id.
 	 * 
@@ -28,11 +30,11 @@ public class AdjustableChainTree extends ChainTree {
 	 */
 	public AdjustableChainTree(String pdbId) {
 		super(pdbId);
-
+/*
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
-		this.rebalanceSubtree(this.root);
+		this.rebalance();*/
 	}
 	
 	/**
@@ -46,7 +48,7 @@ public class AdjustableChainTree extends ChainTree {
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
-		this.rebalanceSubtree(this.root);
+		this.rebalance();
 	}
 	
 	
@@ -170,13 +172,23 @@ public class AdjustableChainTree extends ChainTree {
 		this.lockSubtree(node);		
 		this.computeTightBoundingVolume(node);
 		
-		// make re-balancing treat sub chain as leaf
-		node.height = 0; 
-		
-		node = node.parent;
-		while (node != null) {
-			node.height = Math.max(node.left.height, node.right.height) + 1;
+		this.lockedSubtrees.add(node);
+	}
+	
+	/**
+	 * 
+	 */
+	private void toggleLockedSubtreeVisibility(boolean visible) {
+		for (CTNode node : this.lockedSubtrees) {
+			// toggle this trees hight
+			node.height = (visible) ? Math.max(node.left.height, node.right.height) + 1: 0; 
+			
+			// update ancestors
 			node = node.parent;
+			while (node != null) {
+				node.height = Math.max(node.left.height, node.right.height) + 1;
+				node = node.parent;
+			}
 		}
 	}
 	
@@ -201,12 +213,12 @@ public class AdjustableChainTree extends ChainTree {
 
 		// translate all points into origo
 		TransformationMatrix offset = this.backboneBonds[node.low].transformationMatrix;
-		TransformationMatrix transformationMatrix = new TransformationMatrix(-1*offset.a14, -1*offset.a24, -1*offset.a34);
+		TransformationMatrix transformationMatrix = new TransformationMatrix(1*offset.a14, 1*offset.a24, 1*offset.a34);
 		
 		// compute all points in the sub chain
 		for (int i = node.low; i <= node.high; i++) {
-			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
 			points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
+			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
 		}
 		
 		// update
@@ -217,6 +229,15 @@ public class AdjustableChainTree extends ChainTree {
 			this.computeTightBoundingVolume(node.left);
 			this.computeTightBoundingVolume(node.right);
 		}
+	}
+	
+	/**
+	 * Re-balances the entire tree.
+	 */
+	private void rebalance() {
+		this.toggleLockedSubtreeVisibility(false);
+		this.rebalanceSubtree(this.root);
+		this.toggleLockedSubtreeVisibility(true);
 	}
 	
 	/**
