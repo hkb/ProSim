@@ -1,5 +1,7 @@
 package math.matrix;
 
+import javax.vecmath.Point3d;
+
 import matrix.RotationMatrix4x4;
 import edu.math.Vector;
 
@@ -204,6 +206,16 @@ public class TransformationMatrix {
 		return new Vector(a11*x + a12*y + a13*z + a14, 
 						  a21*x + a22*y + a23*z + a24,
 						  a31*x + a32*y + a33*z + a34);
+	}
+	
+	public Point3d transform(Point3d v) {
+		double x = v.x;
+		double y = v.y;
+		double z = v.z;
+		
+		return new Point3d(a11*x + a12*y + a13*z + a14, 
+  						   a21*x + a22*y + a23*z + a24,
+						   a31*x + a32*y + a33*z + a34);
 	}
 	
 	@Override

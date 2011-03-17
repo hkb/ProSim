@@ -49,16 +49,16 @@ public class ChainTree {
 		 */
 		this.backboneBonds = new CTLeaf[points.size()-1];
 		
-		Point3d current = this.position; // necessary to get relative positions of first element
-		Point3d next;
+		Point3d start = this.position;	// the start of the current bond
+		Point3d end;					// the end of the current bond
 		
 		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
-			next = points.get(i+1);
+			end = points.get(i+1);
 			
 			// create new leaf from its relative position to the next leaf
-			this.backboneBonds[i] = new CTLeaf(new Point3d(next.x-current.x, next.y-current.y, next.z-current.z), i);
+			this.backboneBonds[i] = new CTLeaf(new Point3d(end.x-start.x, end.y-start.y, end.z-start.z), i);
 			
-			current = next;
+			start = end;
 		}
 		
 		/*
@@ -71,13 +71,13 @@ public class ChainTree {
 		 * This will end up with just one node in the current level, that is the root of 
 		 * the tree.
 		 */
-		List<CTNode> currentLevel = new LinkedList<CTNode>();
+		List<CTNode> currentLevel = new ArrayList<CTNode>();
 		for (CTNode l : this.backboneBonds) { currentLevel.add(l); }
 		
 		List<CTNode> nextLevel; 
 		
 		do {
-			nextLevel = new LinkedList<CTNode>();
+			nextLevel = new ArrayList<CTNode>();
 			
 			for (int i = 0, j = currentLevel.size(); i < j; i += 2) {
 				if (i+1 < currentLevel.size()) { // two or more nodes left
@@ -123,6 +123,8 @@ public class ChainTree {
 		
 		List<Point3d> points = new ArrayList<Point3d>();
 		
+		points.add(this.position);
+		
 		for (int i = 0; i < this.backboneBonds.length; i++) {
 			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
 			points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
@@ -166,6 +168,7 @@ public class ChainTree {
 	 * @param node2 A node to check for overlap.
 	 * @return true if there is a clash else false
 	 */
+	public CTNode c1,c2;
 	private boolean isClashing(CTNode left, CTNode right) {
 		
 		// NOTE: This is a purely technical check to avoid double check of the same subtrees
@@ -173,7 +176,8 @@ public class ChainTree {
 			return false;
 		
 		// neighbouring atoms does not cause a clash
-		if (left.isLeaf() && right.isLeaf() && left.low + 1 >= right.high)
+		// neither does the neighbours neighbour since the bounding box of the i-th bond completely covers the i+1-th atom
+		if (left.isLeaf() && right.isLeaf() && left.low + 2 >= right.high)
 			return false;
 		
 		// if no change has occurred between the trees then they have not changed position internal
@@ -187,8 +191,11 @@ public class ChainTree {
 			return false;
 		
 		// if leaves then report clash
-		if (left.isLeaf() && right.isLeaf())
+		if (left.isLeaf() && right.isLeaf()) {
+			c1 = left;
+			c2 = right;
 			return true;
+		}
 		
 		// continue search
 		if(left.isLeaf()) {

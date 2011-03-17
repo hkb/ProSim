@@ -23,7 +23,8 @@ public class LinesegmentSweptSphere implements BoundingVolume {
 	 * @param radius The radius around the line.
 	 */
 	public LinesegmentSweptSphere(Point3d line, double radius) {
-		 this(new Capsule(new Vector(0,0,0), new Vector(line.x, line.y, line.z), radius));
+		// TODO why multiply by -1 ??
+		this(new Capsule(new Vector(0,0,0), new Vector(-1*line.x, -1*line.y, -1*line.z), radius));
 	}
 	
 	/**

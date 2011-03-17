@@ -178,7 +178,7 @@ public class ChainTreeScene {
 		}
 		
 		public void update(Point3d current, Point3d next) {
-			this.sphere.center = new geom3d.Point3d(next.x, next.y, next.z);
+			this.sphere.center = new geom3d.Point3d(current.x, current.y, current.z);
 			this.cylinder.getSegment().setA(new geom3d.Point3d(current.x, current.y, current.z));
 			this.cylinder.getSegment().setB(new geom3d.Point3d(next.x, next.y, next.z));		
 		}

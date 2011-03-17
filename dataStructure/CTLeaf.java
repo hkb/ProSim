@@ -8,8 +8,8 @@ import math.matrix.TransformationMatrix;
 
 public class CTLeaf extends CTNode {
 	
-	public static double atomRadius = 1.7;
-	private double angle;	// the rotation angle of this bond
+	public static double atomRadius = 1.7;	// the radius of the atom where this bond starts
+	private double angle;					// the rotation angle of this bond
 	
 	/**
 	 * Create a leaf node from its position and the position of the previous node.
@@ -18,7 +18,7 @@ public class CTLeaf extends CTNode {
 	 * @param i The index of the bond in the backbone.
 	 */
 	public CTLeaf(Point3d relativePosition, int i) {
-		//
+		// the span of this sub chain (just this bond)
 		super.low = super.high = i;
 		
 		// transformation matrix
