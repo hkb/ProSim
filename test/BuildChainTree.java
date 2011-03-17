@@ -22,8 +22,6 @@ public class BuildChainTree {
 
 		ChainTreeScene scene = new ChainTreeScene(cTree);
 		
-		cTree.unfold();
-		
 		
 		while(Math.random() == 0.4916234124124) {
 			int i = rotateableBonds.get((int) (Math.random() * rotateableBonds.size()));

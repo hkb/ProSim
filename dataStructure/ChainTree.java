@@ -15,7 +15,7 @@ import math.matrix.TransformationMatrix;
 public class ChainTree {
 	
 	protected CTNode root;				// the root node of the tree
-	protected Point3d position;			// the position of the left most node in the world
+	public Point3d position;			// the position of the left most node in the world
 	protected CTLeaf[] backboneBonds;	// the leaf nodes of the tree (the bonds of the protein backbone) 
 	
 	protected Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
@@ -111,15 +111,6 @@ public class ChainTree {
 	 */
 	public int length() {
 		return this.backboneBonds.length;
-	}
-	
-	/**
-	 * 
-	 */
-	public void unfold() {
-		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
-			this.changeRotationAngle(i, 180);
-		}
 	}
 	
 	/**

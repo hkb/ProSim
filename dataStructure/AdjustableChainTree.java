@@ -32,6 +32,7 @@ public class AdjustableChainTree extends ChainTree {
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
+		this.rebalanceSubtree(this.root);
 	}
 	
 	/**
@@ -45,7 +46,10 @@ public class AdjustableChainTree extends ChainTree {
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
+		this.rebalanceSubtree(this.root);
 	}
+	
+	
 	
 	@Override
 	public void changeRotationAngle(int i, double angle) {
@@ -165,6 +169,15 @@ public class AdjustableChainTree extends ChainTree {
 
 		this.lockSubtree(node);		
 		this.computeTightBoundingVolume(node);
+		
+		// make re-balancing treat sub chain as leaf
+		node.height = 0; 
+		
+		node = node.parent;
+		while (node != null) {
+			node.height = Math.max(node.left.height, node.right.height) + 1;
+			node = node.parent;
+		}
 	}
 	
 	/**
@@ -203,6 +216,73 @@ public class AdjustableChainTree extends ChainTree {
 		if (!node.isLeaf()) {
 			this.computeTightBoundingVolume(node.left);
 			this.computeTightBoundingVolume(node.right);
+		}
+	}
+	
+	/**
+	 * Re-balances some subtree.
+	 * 
+	 * @param node The root node of the subtree to be re-balanced.
+	 * @require node.height >= 3
+	 */
+	private void rebalanceSubtree(CTNode node) {
+		// only re-balance trees with minimum height at 3
+		if (node.height >= 3) {
+		
+			// subtrees must be re-balanced first
+			this.rebalanceSubtree(node.left);
+			this.rebalanceSubtree(node.right);
+		
+			// then re-balance root
+			this.rebalanceNode(node);
+		}
+	}
+	
+	private void rebalanceNode(CTNode node) {
+		CTNode a = node;
+		CTNode b = a.left;
+		CTNode c = a.right;
+		
+		// left tree (b) is more that 1 higher so we must re-balance
+		if (b.height - c.height > 1) {
+			CTNode d = b.left;
+			CTNode e = b.right;
+			
+			if (d.height >= e.height) {
+				// perform double rotation
+				this.rotateRight(a);
+				
+				this.rebalanceNode(a);
+				this.rebalanceNode(b);
+			} else {
+				// perform single rotation
+				this.rotateLeft(b);
+				this.rotateRight(a);
+				
+				this.rebalanceNode(a);
+				this.rebalanceNode(e);
+			}
+		}
+		
+		// right tree (c) is more than 1 higher so we must re-balance
+		if (c.height - b.height > 1) {
+			CTNode d = c.left;
+			CTNode e = c.right;
+			
+			if (e.height >= d.height) {
+				// perform double rotation
+				this.rotateLeft(a);
+				
+				this.rebalanceNode(a);
+				this.rebalanceNode(c);
+			} else {
+				// perform single rotation
+				this.rotateRight(c);
+				this.rotateLeft(a);
+				
+				this.rebalanceNode(a);
+				this.rebalanceNode(d);
+			}
 		}
 	}
 	
@@ -277,8 +357,8 @@ public class AdjustableChainTree extends ChainTree {
 		b.transformationMatrix = new TransformationMatrix(b.left.transformationMatrix, d.transformationMatrix);
 		
 		// rotate tree nodes
-		a.left = node;
-		a.parent = node.parent;
+		a.left = b;
+		a.parent = b.parent;
 		
 		if (a.parent == null) {
 			super.root = a;
@@ -287,19 +367,16 @@ public class AdjustableChainTree extends ChainTree {
 				b.parent.left = a;
 			} else {
 				b.parent.right = a;
-			}
+			}node.update();
 		}
 		
 		b.right = d;
 		b.parent = a;
 		d.parent = b;
 		
-		// recompute heights
-		b.height = Math.max(b.left.height, b.right.height) + 1;
-		a.height = Math.max(a.left.height, a.right.height) + 1;
-		
 		// update nodes above the rotated subtree
-		node = a.parent;
+		// starts from d as both a and b are ancestors to d
+		node = d.parent;
 		while (node != null) {
 			node.height = Math.max(node.left.height, node.right.height) + 1;
 			node.update();
@@ -344,12 +421,9 @@ public class AdjustableChainTree extends ChainTree {
 		a.parent = b;
 		d.parent = a;
 		
-		// recompute heights
-		a.height = Math.max(b.left.height, b.right.height) + 1;
-		b.height = Math.max(b.left.height, b.right.height) + 1;
-		
 		// update nodes above the rotated subtree
-		node = b.parent;
+		// starts from d as both a and b are ancestors to d
+		node = d.parent;
 		while (node != null) {
 			node.height = Math.max(node.left.height, node.right.height) + 1;
 			node.update();
