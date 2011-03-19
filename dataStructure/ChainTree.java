@@ -2,7 +2,6 @@ package dataStructure;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -14,7 +13,7 @@ import math.matrix.TransformationMatrix;
 
 public class ChainTree {
 	
-	protected CTNode root;				// the root node of the tree
+	public CTNode root;				// the root node of the tree
 	public Point3d position;			// the position of the left most node in the world
 	protected CTLeaf[] backboneBonds;	// the leaf nodes of the tree (the bonds of the protein backbone) 
 	
@@ -54,8 +53,6 @@ public class ChainTree {
 		
 		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
 			end = points.get(i+1);
-			
-			System.out.println(start + " -> " + end +" = " + new Point3d(end.x-start.x, end.y-start.y, end.z-start.z));
 			
 			// create new leaf from its relative position to the next leaf
 			this.backboneBonds[i] = new CTLeaf(new Point3d(end.x-start.x, end.y-start.y, end.z-start.z), i);
@@ -170,7 +167,6 @@ public class ChainTree {
 	 * @param node2 A node to check for overlap.
 	 * @return true if there is a clash else false
 	 */
-	public CTNode c1,c2;
 	private boolean isClashing(CTNode left, CTNode right) {
 		
 		// NOTE: This is a purely technical check to avoid double check of the same subtrees
@@ -193,11 +189,8 @@ public class ChainTree {
 			return false;
 		
 		// if leaves then report clash
-		if (left.isLeaf() && right.isLeaf()) {
-			c1 = left;
-			c2 = right;
+		if (left.isLeaf() && right.isLeaf())
 			return true;
-		}
 		
 		// continue search
 		if(left.isLeaf()) {
@@ -250,25 +243,31 @@ public class ChainTree {
 		if (j < i) {
 			throw new IllegalArgumentException("i ("+i+") must be less than or equal to j ("+j+")");
 		}
-		
+
 		// unit transformation
 		if (i == j) {
 			return new TransformationMatrix();
 		}
 		
 		// find nearest common ancestor
-		CTNode ancestor = this.backboneBonds[i].parent;
+		CTNode ancestor = this.root;
 		
-		while (ancestor.high < j) {
-			ancestor = ancestor.parent;
+		while (ancestor.left != null) {
+			if (j-1 <= ancestor.left.high) {
+				ancestor = ancestor.left;
+			} else if (ancestor.right.low <= i) {
+				ancestor = ancestor.right;
+			} else {
+				break;
+			}
 		}
 		
 		// if the ancestor exactly covers the nodes then just return it
-		if (ancestor.low == i && ancestor.high == j) {
+		if (ancestor.low == i && ancestor.high == j-1) {
 			return new TransformationMatrix(ancestor.transformationMatrix);
 		}
 		
-		// go down from ancestor to the bonds while building a transformation matrix
+		// go down from ancestor to the bonds while building the transformation matrix
 		// TODO understand this section!!
 		TransformationMatrix transformationMatrix = new TransformationMatrix();
 		CTNode node;
@@ -293,12 +292,12 @@ public class ChainTree {
 		// traverse right subtree of ancestor
 		node = ancestor.right;
 		while (node != null) {
-			if (node.high == j) {
+			if (node.high == j-1) {
 				transformationMatrix.multR(node.transformationMatrix);
 				break;
 			} else {
 				// witch subtree to choose
-				if (j >= node.right.low) { // right
+				if (j-1 >= node.right.low) { // right
 					transformationMatrix.multR(node.left.transformationMatrix);
 					node = node.right;
 				} else { // left

@@ -30,11 +30,11 @@ public class AdjustableChainTree extends ChainTree {
 	 */
 	public AdjustableChainTree(String pdbId) {
 		super(pdbId);
-/*
+
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
-		this.rebalance();*/
+		this.rebalance();
 	}
 	
 	/**
@@ -211,11 +211,9 @@ public class AdjustableChainTree extends ChainTree {
 	private void computeTightBoundingVolume(CTNode node) {		
 		List<Point3d> points = new LinkedList<Point3d>();
 
-		// translate all points into origo
-		TransformationMatrix offset = this.backboneBonds[node.low].transformationMatrix;
-		TransformationMatrix transformationMatrix = new TransformationMatrix(1*offset.a14, 1*offset.a24, 1*offset.a34);
-		
-		// compute all points in the sub chain
+		// compute all points in the sub chain in the coordinate system of node.low
+		TransformationMatrix transformationMatrix = new TransformationMatrix();
+
 		for (int i = node.low; i <= node.high; i++) {
 			points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
 			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
