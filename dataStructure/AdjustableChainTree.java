@@ -80,6 +80,17 @@ public class AdjustableChainTree extends ChainTree {
 		return rotatableBonds;
 	}
 	
+	@Override
+	public void unfold() {
+		for (int i : this.rotatableBonds()) {
+			int d = 180;
+			do {
+				this.changeRotationAngle(i, d-super.getDihedralAngle(i));
+				d--;
+			} while(this.isClashing());
+		}
+	}
+	
 	/**
 	 * Locks and groups peptide planes.
 	 */

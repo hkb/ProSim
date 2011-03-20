@@ -7,6 +7,10 @@ import java.util.Set;
 
 import javax.vecmath.Point3d;
 
+import edu.math.Vector;
+import energyFunction.EnergyFunction;
+import geom3d.Vector3d;
+
 import tool.PDBParser;
 
 import math.matrix.TransformationMatrix;
@@ -15,7 +19,8 @@ public class ChainTree {
 	
 	public CTNode root;				// the root node of the tree
 	public Point3d position;			// the position of the left most node in the world
-	protected CTLeaf[] backboneBonds;	// the leaf nodes of the tree (the bonds of the protein backbone) 
+	public CTLeaf[] backboneBonds;	// the leaf nodes of the tree (the bonds of the protein backbone)
+	private EnergyFunction energyFunction; // the function used to compute the proteins energy
 	
 	protected Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
 	protected Set<Integer> betaSheet = new HashSet<Integer>();	// set of all bonds in beta sheets 
@@ -329,6 +334,40 @@ public class ChainTree {
 			node.update();
 		}
 		
+		// remember the last rotated bond for checking algorithms
 		this.lastRotatedBond = i;
+	}
+	
+	/**
+	 * Unfolds the protein into a random, non clashing, confirmation.
+	 */
+	public void unfold() {
+		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
+			int d = 180;
+			do {
+				this.changeRotationAngle(i, d-this.getDihedralAngle(i));
+				d--;
+			} while(this.isClashing());
+		}
+	}
+	
+	/**
+	 * Computes the dihedral angle of the bond.
+	 * 
+	 * @param i The bond to calculate the dihedral angle for.
+	 * @return The dihedral angle around the bond.
+	 */
+	protected double getDihedralAngle(int i) {
+		if (i < 1 || i >= this.backboneBonds.length-1)
+			return 0.0;
+		
+		Point3d p = new Point3d();
+		Point3d q = this.getTransformationMatrix(i-1,i).getPosition();
+		Point3d r = this.getTransformationMatrix(i-1,i+1).getPosition();
+		Point3d s = this.getTransformationMatrix(i-1,i+2).getPosition();
+		Vector3d pq = new Vector3d(p.x-q.x, p.y-q.y, p.z-q.z);
+		Vector3d qr = new Vector3d(q.x-r.x, q.y-r.y, q.z-r.z);
+		Vector3d rs = new Vector3d(r.x-s.x, r.y-s.y, r.z-s.z);
+		return Vector3d.getDihedralAngle(pq, qr, rs);
 	}
 }

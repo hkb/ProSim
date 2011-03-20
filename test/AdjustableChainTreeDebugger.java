@@ -35,7 +35,7 @@ public class AdjustableChainTreeDebugger {
 		
 		ChainTreeScene scene = new ChainTreeScene(cTree);
 
-		//paintBoundingVolume(cTree, cTree.getRoot(), scene, height, locked);
+		paintBoundingVolume(cTree, cTree.getRoot(), scene, height, locked);
 	}
 	
 	private static void paintBoundingVolume(ChainTree cTree, CTNode node, ChainTreeScene scene, int height, boolean locked) {

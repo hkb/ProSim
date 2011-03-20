@@ -96,15 +96,6 @@ public class CTNode {
 		return this.height;
 	}
 	
-	/**
-	 * Computes the energy of the node.
-	 * 
-	 * @param energyFunction
-	 */
-	public void computeEnergy(EnergyFunction energyFunction) {
-		this.energy = energyFunction.compute(this);
-	}
-	
 	@Override
 	public String toString() {
 		return ""+this.height;//this.low+"-"+this.high;

@@ -5,10 +5,9 @@ import dataStructure.CTNode;
 public interface EnergyFunction {
 
 	/**
-	 * Computes the energy of the particular node in the tree.
-	 * 
-	 * @param node Node to compute the energy for.
-	 * @return The energy of the node.
+	 * Computes the energy of the particular tree.
+	 * *
+	 * @return The energy of the tree.
 	 */
-	public double compute(CTNode node);
+	public double compute();
 }

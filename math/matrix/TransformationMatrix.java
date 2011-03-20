@@ -218,6 +218,10 @@ public class TransformationMatrix {
 						   a31*x + a32*y + a33*z + a34);
 	}
 	
+	public Point3d getPosition() {
+		return new Point3d(this.a14, this.a24, this.a34);
+	}
+	
 	@Override
 	public String toString() {
 		return String.format("[%s, %s, %s, %s]\n[%s, %s, %s, %s]\n[%s, %s, %s, %s]", 

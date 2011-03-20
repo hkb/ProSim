@@ -19,6 +19,8 @@ public class BuildChainTree {
 
 		AdjustableChainTree cTree = new AdjustableChainTree("1PUX");
 		List<Integer> rotateableBonds = cTree.rotatableBonds(); 
+		
+		cTree.unfold();
 
 		ChainTreeScene scene = new ChainTreeScene(cTree);
 		
