@@ -1,7 +1,5 @@
 package energyFunction;
 
-import dataStructure.CTNode;
-
 public interface EnergyFunction {
 
 	/**
