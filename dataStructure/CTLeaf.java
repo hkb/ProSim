@@ -11,6 +11,8 @@ public class CTLeaf extends CTNode {
 	public static double atomRadius = 1.7;	// the radius of the atom where this bond starts
 	private double angle;					// the rotation angle of this bond
 	
+	
+	
 	/**
 	 * Create a leaf node from its position and the position of the previous node.
 	 *  
@@ -28,6 +30,8 @@ public class CTLeaf extends CTNode {
 		this.boundingVolume = new LinesegmentSweptSphere(relativePosition, atomRadius/2);
 	}
 	
+	
+	
 	/**
 	 * Rotates the bond by the given angle.
 	 * 
@@ -35,6 +39,7 @@ public class CTLeaf extends CTNode {
 	 */
 	public void rotate(double angle) {
 		this.angle -= angle;
+		
 		transformationMatrix.rotate(this.angle);
 	}
 	

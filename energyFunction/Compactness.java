@@ -17,7 +17,7 @@ public class Compactness implements EnergyFunction {
 
 	@Override
 	public double compute() {
-		List<Point3d> points = this.cTree.getBackboneAtomPoints();
+		List<Point3d> points = this.cTree.getBackboneAtomPositions();
 		
 		return 0;
 	}

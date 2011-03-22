@@ -1,20 +1,18 @@
 package dataStructure;
 
-import energyFunction.EnergyFunction;
-
 import math.matrix.TransformationMatrix;
 import boundingVolume.BoundingVolume;
 
 public class CTNode {
 	
 	public CTNode left, right, parent;					// connected nodes in the tree
-	protected double energy;								// the energy of the current node
+	protected double energy;							// the energy of the current node
 	public BoundingVolume boundingVolume;				// the bounding volume of the node
 	public TransformationMatrix transformationMatrix;	// the nodes transformation matrix
 	public int height;									// the height of the nodes subtree
 	public int low, high;								// the lowest and highest covered backbone bond
 	
-	public boolean isLocked = false;						// is this node locked?
+	public boolean isLocked = false;					// is this node locked?
 	
 	
 	/**
@@ -49,6 +47,33 @@ public class CTNode {
 	
 	
 	/**
+	 * Returns the left child of this node.
+	 * 
+	 * @return The left child.
+	 */
+	public CTNode getLeft() {
+		return this.left;
+	}
+	
+	/**
+	 * Returns the right child of this node.
+	 * 
+	 * @return The right child.
+	 */
+	public CTNode getRight() {
+		return this.right;
+	}
+	
+	/**
+	 * Returns the height of this node.
+	 * 
+	 * @return The height of the node.
+	 */
+	public int getHeight() {
+		return this.height;		
+	}
+	
+	/**
 	 * Is this node a leaf?
 	 */
 	public boolean isLeaf() {
@@ -68,37 +93,10 @@ public class CTNode {
 		// sub chain energy
 		this.energy = this.left.energy + this.right.energy;
 	}
-
-	/**
-	 * Gets the left child.
-	 * 
-	 * @return The left child.
-	 */
-	public CTNode getLeft() {
-		return this.left;
-	}
-	
-	/**
-	 * Gets the right child.
-	 * 
-	 * @return The right child.
-	 */
-	public CTNode getRight() {
-		return this.right;
-	}
-	
-	/**
-	 * The height of the nodes subtree.
-	 * 
-	 * @return The height of the nodes subtree.
-	 */
-	public int getHeight() {
-		return this.height;
-	}
 	
 	@Override
 	public String toString() {
-		return ""+this.height;//this.low+"-"+this.high;
+		return ""+this.height;
 	}
 
 }

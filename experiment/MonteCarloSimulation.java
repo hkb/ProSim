@@ -13,7 +13,7 @@ public class MonteCarloSimulation {
 		/*
 		 * Setup
 		 */
-		String pdbId = "1PUX";
+		String pdbId = "1PUX"; // 1PUX <3
 		double errorTolerance = 0.01;
 		double targetEnergy = 0.01;
 		
@@ -25,7 +25,7 @@ public class MonteCarloSimulation {
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		AdjustableChainTree target = new AdjustableChainTree(pdbId);
 		
-		EnergyFunction energyFunction = new DihedralAngles(cTree, target);
+		EnergyFunction energyFunction = new AtomDistance(cTree, target);
 		List<Integer> rotateableBonds = cTree.rotatableBonds();
 		
 		errorTolerance++; // simpler computation

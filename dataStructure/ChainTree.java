@@ -7,9 +7,9 @@ import java.util.Set;
 
 import javax.vecmath.Point3d;
 
+import boundingVolume.BoundingVolume;
+
 import edu.math.Vector;
-import energyFunction.EnergyFunction;
-import geom3d.Vector3d;
 
 import tool.PDBParser;
 
@@ -17,15 +17,17 @@ import math.matrix.TransformationMatrix;
 
 public class ChainTree {
 	
-	public CTNode root;				// the root node of the tree
-	public Point3d position;			// the position of the left most node in the world
-	public CTLeaf[] backboneBonds;	// the leaf nodes of the tree (the bonds of the protein backbone)
-	private EnergyFunction energyFunction; // the function used to compute the proteins energy
+	public CTNode root;											// the root node of the tree
+	public CTLeaf[] backboneBonds;								// the leaf nodes of the tree (the bonds of the protein backbone)
+	
+	private Point3d position;									// the position of the left most node in the world
+	private double angle;										// the rotating angle of this backbone
+	private TransformationMatrix worldTransformation;			// the transformation to transform from the proteins local coordinates to the world 
 	
 	protected Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
 	protected Set<Integer> betaSheet = new HashSet<Integer>();	// set of all bonds in beta sheets 
 	
-	private int lastRotatedBond;	// the last rotated bond
+	private int lastRotatedBond;								// the last rotated bond
 	
 	
 
@@ -46,10 +48,14 @@ public class ChainTree {
 	 * @param points The points of the protein backbone atoms.
 	 */
 	public ChainTree(List<Point3d> points) {
-		this.position = points.get(0);
+		// store the absolute position of the chain
+		Point3d first = points.get(0);
+		this.position = new Point3d(first.x, first.y, first.z);
+		
+		this.worldTransformation = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
 				
 		/*
-		 * Create leaf nodes.
+		 * Create leaf nodes for each bond.
 		 */
 		this.backboneBonds = new CTLeaf[points.size()-1];
 		
@@ -76,18 +82,24 @@ public class ChainTree {
 		 * the tree.
 		 */
 		List<CTNode> currentLevel = new ArrayList<CTNode>();
-		for (CTNode l : this.backboneBonds) { currentLevel.add(l); }
-		
 		List<CTNode> nextLevel; 
 		
+		// initialise current level with all the leaves
+		for (CTNode l : this.backboneBonds) { 
+			currentLevel.add(l); 
+		}
+
+		// if the current level contains more than one node then group them in a new level
 		do {
 			nextLevel = new ArrayList<CTNode>();
 			
 			for (int i = 0, j = currentLevel.size(); i < j; i += 2) {
-				if (i+1 < currentLevel.size()) { // two or more nodes left
+				if (i+1 < currentLevel.size()) {
+					// two or more nodes left
 					nextLevel.add(new CTNode(currentLevel.get(i), currentLevel.get(i+1)));
 					
-				} else if (i < currentLevel.size()) { // only one node left
+				} else if (i < currentLevel.size()) {
+					// only one node left
 					nextLevel.add(currentLevel.get(i));
 				}
 			}
@@ -95,7 +107,7 @@ public class ChainTree {
 			currentLevel = nextLevel;
 		} while (currentLevel.size() > 1);
 		
-		// the root has been found
+		// when only on node in the current level then store it as the root
 		this.root = currentLevel.get(0);
 	}	
 	
@@ -118,12 +130,12 @@ public class ChainTree {
 	}
 	
 	/**
-	 * Returns the points of the protein bonds.
+	 * Returns the absolute position of the protein backbone atoms.
 	 * 
-	 * @return The points of the protein bonds.
+	 * @return The points of the atoms.
 	 */
-	public List<Point3d> getBackboneAtomPoints () {
-		TransformationMatrix transformationMatrix = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
+	public List<Point3d> getBackboneAtomPositions() {
+		TransformationMatrix transformationMatrix = new TransformationMatrix(this.worldTransformation);
 		
 		List<Point3d> points = new ArrayList<Point3d>();
 		
@@ -138,101 +150,87 @@ public class ChainTree {
 	}
 	
 	/**
-	 * Is the bond part of a alpha helix.
+	 * Returns a chain tree representing a sub chain of the backbone.
 	 * 
-	 * @param i The index of the bond.
+	 * @param i The starting atom (included).
+	 * @param j The ending atom (included).
 	 */
-	public boolean isInAlphaHelix(int i) {
-		return this.alphaHelix.contains(i);
-	}
-	
-	/**
-	 * Is the bond part of a beta sheet.
-	 * 
-	 * @param i The index of the bond.
-	 */
-	public boolean isInBetaSheet(int i) {
-		return this.betaSheet.contains(i);
-	}
-	
-	/**
-	 * Tests the tree for a self-clash.
-	 * 
-	 * @return true if the tree clashes with it self.
-	 */
-
-	public boolean isClashing() {
-		return isClashing(this.root, this.root);
-	}
-	
-	/**
-	 * Check if the sub-chains of two nodes does clash.
-	 * 
-	 * @param node1 A node to check for overlap.
-	 * @param node2 A node to check for overlap.
-	 * @return true if there is a clash else false
-	 */
-	private boolean isClashing(CTNode left, CTNode right) {
-		
-		// NOTE: This is a purely technical check to avoid double check of the same subtrees
-		if (right.low < left.low)
-			return false;
-		
-		// neighbouring atoms does not cause a clash
-		// neither does the neighbours neighbour since the bounding box of the i-th bond completely covers the i+1-th atom
-		if (left.isLeaf() && right.isLeaf() && left.low + 2 >= right.high)
-			return false;
-		
-		// if no change has occurred between the trees then they have not changed position internal
-		if (!this.hasChanged(left, right))
-			return false;
-		
-		// check for overlap
-		boolean overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(left.low, right.low)));
-
-		if (!overlap)
-			return false;
-		
-		// if leaves then report clash
-		if (left.isLeaf() && right.isLeaf())
-			return true;
-		
-		// continue search
-		if(left.isLeaf()) {
-			return isClashing(left, right.left) || isClashing(left, right.right);
-			
-		} else if (right.isLeaf()) {
-			return isClashing(left.left, right) || isClashing(left.right, right);
-			
-		} else {
-			// only split the larger volume
-			// TODO WHY DOES THIS WORK?!
-			if (left.boundingVolume.volume() > right.boundingVolume.volume()) {
-				return isClashing(left.left, right) || isClashing(left.right, right);
-			} else {
-				return isClashing(left, right.left) || isClashing(left, right.right);
-			}		   
-		}
-	}
-	
-	/**
-	 * Determines if the two sub chains has changed internally by the last update.
-	 * 
-	 * @param left The left most sub chain.
-	 * @param right The rightmost sub chain.
-	 * @require left.low <= right.low
-	 * @return true if a bond affecting the subtrees has changed
-	 */
-	private boolean hasChanged(CTNode left, CTNode right) {
-		if (right.low < left.low) {
-			throw new IllegalArgumentException("Invalid argument order!");
+	public ChainTree getSubchain(int i, int j) {
+		if (i % 3 != 0 || j % 3 != 0) {
+			throw new IllegalArgumentException("You can't break an amino acid!");
 		}
 		
-		int lastRotatedBond = this.lastRotatedBond;
+		ChainTree cTree = new ChainTree(this.getBackboneAtomPositions().subList(i, j+1));
 		
-		return (left.low <= lastRotatedBond && lastRotatedBond <= left.high) ||   // in left subtree
-			   (right.low <= lastRotatedBond && lastRotatedBond <= right.high) || // in right subtree
-			   (left.low <= lastRotatedBond && lastRotatedBond <= right.high);    // between left and right subtree
+		// copy secondary structure information
+		for (int k = i; k <= j; k++) {
+			if (this.alphaHelix.contains(k)) {
+				cTree.alphaHelix.add(k-i);
+			}
+		}
+
+		for (int k = i; k <= j; k++) {
+			if (this.betaSheet.contains(k)) {
+				cTree.betaSheet.add(k-i);
+			}
+		}
+		
+		return cTree;
+	}
+	
+	/**
+	 * Returns the dihedral angles defined by the backbone bonds.
+	 * 
+	 * @return The dihedral angles.
+	 */
+	public List<Double> getDihedralAngles() {
+		List<Point3d> points = this.getBackboneAtomPositions();
+		
+		List<Double> dihedralAngles = new ArrayList<Double>();
+		
+		// first angle is zero
+		dihedralAngles.add(0.0);
+		
+		// init computation
+		Point3d q = points.get(0);
+		Point3d r = points.get(1);
+		Point3d s = points.get(2);
+		
+		Vector qr = new Vector(q.x-r.x, q.y-r.y, q.z-r.z);
+		Vector rs = new Vector(r.x-s.x, r.y-s.y, r.z-s.z);
+		Vector pq;
+		
+		// compute all angles
+		for (int i = 1, j = points.size()-2; i < j; i++) {
+			q = r;
+			r = s;
+			pq = qr;
+			qr = rs;
+			s = points.get(i+2);
+			rs = new Vector(r.x-s.x, r.y-s.y, r.z-s.z);
+			
+			dihedralAngles.add((double) Vector.dihedralAngle(pq, qr, rs));
+		}
+
+		// last angle is zero
+		dihedralAngles.add(0.0);
+		
+		return dihedralAngles;
+	}
+	
+	/**
+	 * Returns a transformation matrix from the given backbone coordinate system
+	 * to the world coordinate system.
+	 * 
+	 * @param j The bond to transform from.
+	 * @return The transformation from the j-th coordinate system into the world coordinate system
+	 */
+	public TransformationMatrix getWorldTransformation(int j) {
+		TransformationMatrix transformationMatrix = this.getTransformationMatrix(0, j);
+		
+		transformationMatrix.multL(this.worldTransformation);
+		
+		return transformationMatrix;
 	}
 
 	/**
@@ -244,7 +242,7 @@ public class ChainTree {
 	 * @require i < j
 	 * @return The matrix to transform j into i.
 	 */
-	public TransformationMatrix getTransformationMatrix(int i, int j) {
+	private TransformationMatrix getTransformationMatrix(int i, int j) {
 		if (j < i) {
 			throw new IllegalArgumentException("i ("+i+") must be less than or equal to j ("+j+")");
 		}
@@ -315,6 +313,152 @@ public class ChainTree {
 	}
 	
 	/**
+	 * Is the bond part of a alpha helix.
+	 * 
+	 * @param i The index of the bond.
+	 */
+	public boolean isInAlphaHelix(int i) {
+		return this.alphaHelix.contains(i);
+	}
+	
+	/**
+	 * Is the bond part of a beta sheet.
+	 * 
+	 * @param i The index of the bond.
+	 */
+	public boolean isInBetaSheet(int i) {
+		return this.betaSheet.contains(i);
+	}
+	
+	/**
+	 * Tests the tree for a self-clash.
+	 * 
+	 * @return true if the tree clashes with it self.
+	 */
+	public boolean isClashing() {
+		return isClashing(this.root, this.root);
+	}
+	
+	/**
+	 * Check if the sub-chains of two nodes does clash.
+	 * 
+	 * @param node1 A node to check for overlap.
+	 * @param node2 A node to check for overlap.
+	 * @return true if there is a clash else false
+	 */
+	private boolean isClashing(CTNode left, CTNode right) {
+		
+		// NOTE: This is a purely technical check to avoid double check of the same subtrees
+		if (right.low < left.low)
+			return false;
+		
+		// neighbouring atoms does not cause a clash
+		// neither does the neighbours neighbour since the bounding box of the i-th bond completely covers the i+1-th atom
+		if (left.isLeaf() && right.isLeaf() && left.low + 2 >= right.high)
+			return false;
+		
+		// if no change has occurred between the trees then they have not changed position internal
+		if (!this.hasChanged(left, right))
+			return false;
+		
+		// check for overlap
+		boolean overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(left.low, right.low)));
+
+		if (!overlap)
+			return false;
+		
+		// if leaves then report clash
+		if (left.isLeaf() && right.isLeaf())
+			return true;
+		
+		// continue search
+		if(left.isLeaf()) {
+			return isClashing(left, right.left) || isClashing(left, right.right);
+			
+		} else if (right.isLeaf()) {
+			return isClashing(left.left, right) || isClashing(left.right, right);
+			
+		} else {
+			// only split the larger volume
+			// TODO WHY DOES THIS WORK?!
+			if (left.boundingVolume.volume() > right.boundingVolume.volume()) {
+				return isClashing(left.left, right) || isClashing(left.right, right);
+			} else {
+				return isClashing(left, right.left) || isClashing(left, right.right);
+			}		   
+		}
+	}
+	
+	/**
+	 * Determines if the two sub chains has changed internally by the last rotation.
+	 * 
+	 * @param left The left most sub chain.
+	 * @param right The rightmost sub chain.
+	 * @require left.low <= right.low
+	 * @return true if a bond affecting the subtrees has changed
+	 */
+	private boolean hasChanged(CTNode left, CTNode right) {
+		if (right.low < left.low) {
+			throw new IllegalArgumentException("Invalid argument order!");
+		}
+		
+		int lastRotatedBond = this.lastRotatedBond;
+		
+		return (left.low <= lastRotatedBond && lastRotatedBond <= left.high) ||   // in left subtree
+			   (right.low <= lastRotatedBond && lastRotatedBond <= right.high) || // in right subtree
+			   (left.low <= lastRotatedBond && lastRotatedBond <= right.high);    // between left and right subtree
+	}
+	
+	/**
+	 * Determines if this chain tree clashes with the other.
+	 * 
+	 * @param other The other chain tree.
+	 * @return true if a clash occurs else false.
+	 */
+	public boolean areClashing(ChainTree other) {
+		return areClashing(this.root, other.root, other);
+	}
+	
+	/**
+	 * Determines if the sub chain in this tree represented by this node clashes with the
+	 * sub chain represented by the node in the other tree.
+	 * 
+	 * @param thisNode The node to test in this tree.
+	 * @param otherNode The node to test in the other tree.
+	 * @param other The other tree.
+	 * @return true if the trees clash else false.
+	 */
+	private boolean areClashing(CTNode thisNode, CTNode otherNode, ChainTree other) {
+		// check for overlap
+		BoundingVolume thisVolume = thisNode.boundingVolume.transform(this.getWorldTransformation(thisNode.low));
+		BoundingVolume otherVolume = otherNode.boundingVolume.transform(other.getWorldTransformation(otherNode.low));
+
+		// if no overlap then stop
+		if(!thisVolume.isOverlaping(otherVolume))
+			return false;
+		
+		// leaves are clashing
+		if(thisNode.isLeaf() && otherNode.isLeaf())
+			return true;
+		
+		// continue search
+		if(thisNode.isLeaf()) {
+			return this.areClashing(thisNode, otherNode.left, other) ||
+			       this.areClashing(thisNode, otherNode.right, other);
+			
+		} else if(otherNode.isLeaf()) {
+			return this.areClashing(thisNode.left, otherNode, other) ||
+		       	   this.areClashing(thisNode.right, otherNode, other);
+			
+		} else {
+			return this.areClashing(thisNode.left, otherNode, other)  ||
+		       	   this.areClashing(thisNode.right, otherNode, other) || 
+		           this.areClashing(thisNode, otherNode.left, other)  ||
+	       	       this.areClashing(thisNode, otherNode.right, other);
+		}
+	}
+
+	/**
 	 * Changes the rotation angle of the i-th bond by the specified angle.
 	 * 
 	 * @param i The index of the bond.
@@ -339,35 +483,39 @@ public class ChainTree {
 	}
 	
 	/**
-	 * Unfolds the protein into a random, non clashing, confirmation.
+	 * Unfolds the protein into some, non clashing, confirmation.
 	 */
 	public void unfold() {
+		List<Double> dihedralAngles = this.getDihedralAngles();
+		
 		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
 			int d = 180;
 			do {
-				this.changeRotationAngle(i, d-this.getDihedralAngle(i));
+				this.changeRotationAngle(i, d-dihedralAngles.get(i));
 				d--;
 			} while(this.isClashing());
 		}
 	}
 	
 	/**
-	 * Computes the dihedral angle of the bond.
+	 * Move the entire protein.
 	 * 
-	 * @param i The bond to calculate the dihedral angle for.
-	 * @return The dihedral angle around the bond.
+	 * @param move The vector that defines the movement.
 	 */
-	protected double getDihedralAngle(int i) {
-		if (i < 1 || i >= this.backboneBonds.length-1)
-			return 0.0;
+	public void move(Point3d move) {
+		this.position.add(move);
 		
-		Point3d p = new Point3d();
-		Point3d q = this.getTransformationMatrix(i-1,i).getPosition();
-		Point3d r = this.getTransformationMatrix(i-1,i+1).getPosition();
-		Point3d s = this.getTransformationMatrix(i-1,i+2).getPosition();
-		Vector3d pq = new Vector3d(p.x-q.x, p.y-q.y, p.z-q.z);
-		Vector3d qr = new Vector3d(q.x-r.x, q.y-r.y, q.z-r.z);
-		Vector3d rs = new Vector3d(r.x-s.x, r.y-s.y, r.z-s.z);
-		return Vector3d.getDihedralAngle(pq, qr, rs);
+		this.worldTransformation = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
+		this.worldTransformation.rotate(this.angle);
+	}
+	
+	/**
+	 * Rotate the entire protein by the given angle.
+	 * 
+	 * @param The angle to rotate with.
+	 */
+	public void rotate(double angle) {
+		this.angle -= angle;
+		this.worldTransformation.rotate(this.angle);
 	}
 }

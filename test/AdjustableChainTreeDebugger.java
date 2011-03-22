@@ -38,7 +38,7 @@ public class AdjustableChainTreeDebugger {
 		paintBoundingVolume(cTree, cTree.getRoot(), scene, height, locked);
 	}
 	
-	private static void paintBoundingVolume(ChainTree cTree, CTNode node, ChainTreeScene scene, int height, boolean locked) {
+	public static void paintBoundingVolume(ChainTree cTree, CTNode node, ChainTreeScene scene, int height, boolean locked) {
 		if (node.height == height || height == -1 || (locked && node.isLocked)) {
 			paintVolume(cTree, node, scene);
 		}
@@ -49,12 +49,8 @@ public class AdjustableChainTreeDebugger {
 		}
 	}
 	
-	private static void paintVolume(ChainTree cTree, CTNode node, ChainTreeScene scene) {
-		TransformationMatrix w = new TransformationMatrix(cTree.position.x, cTree.position.y, cTree.position.z);
-		TransformationMatrix t = cTree.getTransformationMatrix(0, node.low);
-		t.multL(w);
-			
-		Capsule vol = ((LinesegmentSweptSphere) node.boundingVolume.transform(t)).volume;
+	public static void paintVolume(ChainTree cTree, CTNode node, ChainTreeScene scene) {
+		Capsule vol = ((LinesegmentSweptSphere) node.boundingVolume.transform(cTree.getWorldTransformation(node.low))).volume;
 
 		Color color = (node.isLocked) ? new Color(255,0,0, 150) : new Color(0,0,255, 150);
 		scene.scene.addShape(new Capsule3d(new Point3d(vol.p1.x(), vol.p1.y(), vol.p1.z()), new Point3d(vol.p2.x(), vol.p2.y(), vol.p2.z()), vol.rad), color);

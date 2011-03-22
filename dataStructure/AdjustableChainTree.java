@@ -1,9 +1,6 @@
 package dataStructure;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,12 +9,7 @@ import javax.vecmath.Point3d;
 
 import boundingVolume.LinesegmentSweptSphere;
 
-import edu.geom3D.Capsule;
-import edu.math.Vector;
-
 import math.matrix.TransformationMatrix;
-
-import tool.BinaryTreePainter;
 
 public class AdjustableChainTree extends ChainTree {
 	
@@ -50,16 +42,31 @@ public class AdjustableChainTree extends ChainTree {
 		this.lockAndGroupBetaSheets();
 		this.rebalance();
 	}
-	
+
 	
 	
 	@Override
-	public void changeRotationAngle(int i, double angle) {
-		if (super.backboneBonds[i].isLocked) {
-			throw new IllegalArgumentException("Can't rotate locked bonds!");
+	public AdjustableChainTree getSubchain(int i, int j) {
+		if (i % 3 != 0 || j % 3 != 2) {
+			throw new IllegalArgumentException("You can't break an amino acid!");
 		}
 		
-		super.changeRotationAngle(i, angle);
+		AdjustableChainTree cTree = new AdjustableChainTree(this.getBackboneAtomPositions().subList(i, j+1));
+		
+		// copy secondary structure information
+		for (int k = i; k <= j; k++) {
+			if (this.alphaHelix.contains(k)) {
+				cTree.alphaHelix.add(k-i);
+			}
+		}
+
+		for (int k = i; k <= j; k++) {
+			if (this.betaSheet.contains(k)) {
+				cTree.betaSheet.add(k-i);
+			}
+		}
+		
+		return cTree;
 	}
 	
 	/**
@@ -78,14 +85,25 @@ public class AdjustableChainTree extends ChainTree {
 		}
 		
 		return rotatableBonds;
+	}	
+	
+	@Override
+	public void changeRotationAngle(int i, double angle) {
+		if (super.backboneBonds[i].isLocked) {
+			throw new IllegalArgumentException("Can't rotate locked bond!");
+		}
+		
+		super.changeRotationAngle(i, angle);
 	}
 	
 	@Override
 	public void unfold() {
+		List<Double> dihedralAngles = this.getDihedralAngles();
+		
 		for (int i : this.rotatableBonds()) {
 			int d = 180;
 			do {
-				this.changeRotationAngle(i, d-super.getDihedralAngle(i));
+				this.changeRotationAngle(i, d-dihedralAngles.get(i));
 				d--;
 			} while(this.isClashing());
 		}

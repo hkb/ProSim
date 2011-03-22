@@ -21,14 +21,14 @@ public class AtomDistance implements EnergyFunction {
 		this.target = target;
 		
 		// precompute target points
-		this.targetPoints = this.target.getBackboneAtomPoints();
+		this.targetPoints = this.target.getBackboneAtomPositions();
 	}
 
 	@Override
 	public double compute() {
 		double sum = 0;
 		
-		List<Point3d> testingPoints = this.testing.getBackboneAtomPoints();
+		List<Point3d> testingPoints = this.testing.getBackboneAtomPositions();
 		
 		for (int i = 0, j = testingPoints.size(); i < j; i++) {	
 			double diff = Math.abs(testingPoints.get(i).distance(this.targetPoints.get(i)));

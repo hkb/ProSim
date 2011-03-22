@@ -84,7 +84,7 @@ public class ChainTreeScene {
 	 */
 	public void add(ChainTree cTree) {
 		if(!this.cTrees.containsKey(cTree)) {
-			List<Point3d> points = cTree.getBackboneAtomPoints();
+			List<Point3d> points = cTree.getBackboneAtomPositions();
 			
 			GUINode[] guiNodes = new GUINode[points.size()];
 			
@@ -134,7 +134,7 @@ public class ChainTreeScene {
 	 * @param cTree The tree to repaint.
 	 */
 	private void repaint(ChainTree cTree) {
-		List<Point3d> points = cTree.getBackboneAtomPoints();
+		List<Point3d> points = cTree.getBackboneAtomPositions();
 		GUINode[] guiNodes = this.cTrees.get(cTree);
 		
 		for (int i = 0, j = points.size()-1; i < j; i++) {
