@@ -16,8 +16,11 @@ public class PDBParser {
 	public List<Point3d> backbone = new ArrayList<Point3d>();
 	public Set<Integer> alphaHelix = new HashSet<Integer>();
 	public Set<Integer> betaSheet = new HashSet<Integer>();
+	public Set<Integer> heteroAtoms = new HashSet<Integer>();
 	
+	// small state variables
 	private boolean endOfBackbone;
+	private int atomCount;
 	
 	
 	/**
@@ -33,8 +36,13 @@ public class PDBParser {
 				String record = scanner.nextLine();
 				String type = recordType(record);
 				
+				if (type.equals("ENDMDL"))
+					break;
+				
 				if (type.equals("ATOM")) {
 					parseAtom(record);
+				} else if (type.equals("HETATM")) {
+					parseHeteroAtom(record);
 				} else if (type.equals("HELIX")) {
 					parseHelix(record);
 				} else if (type.equals("SHEET")) {
@@ -51,25 +59,38 @@ public class PDBParser {
 	/**
 	 * Parses a ATOM record
 	 * 
-	 * @param tokens The PDB record.
+	 * @param record The PDB record.
 	 */
 	private void parseAtom (String record) {
 		String name = columns(record, 13, 16);
 		
 		// is backbone
-		if(!endOfBackbone && (name.equals("C") || name.equals("N") || name.equals("CA"))) {
+		if(!this.endOfBackbone && (name.equals("N") || name.equals("CA") || name.equals("C"))) {
 			double x = Double.parseDouble(columns(record, 31, 38));
 			double y = Double.parseDouble(columns(record, 39, 46));
 			double z = Double.parseDouble(columns(record, 47, 54));
 
 			this.backbone.add(new Point3d(x, y, z));
+			this.atomCount++;
 		}
+	}
+	
+	/**
+	 * Parses a backbone hetero atom.
+	 * 
+	 * @param record The PDB record.
+	 */
+	private void parseHeteroAtom(String record) {
+		this.parseAtom(record);
+		
+		// PDB files are 1-indexed but we need 0-indexing
+		this.heteroAtoms.add(this.atomCount-1);
 	}
 
 	/**
 	 * Parses a HELIX record
 	 * 
-	 * @param tokens The PDB record.
+	 * @param record The PDB record.
 	 */
 	private void parseHelix (String record) {
 		int i = Integer.parseInt(columns(record, 22, 25)) * 3;
@@ -84,7 +105,7 @@ public class PDBParser {
 	/**
 	 * Parses a SHEET record
 	 * 
-	 * @param tokens The PDB record.
+	 * @param record The PDB record.
 	 */
 	private void parseSheet (String record) {
 		int i = Integer.parseInt(columns(record, 23, 26)) * 3;
@@ -99,7 +120,7 @@ public class PDBParser {
 	/**
 	 * Parses a TER record
 	 * 
-	 * @param tokens The PDB record.
+	 * @param record The PDB record.
 	 */
 	private void parseTer (String record) {
 		this.endOfBackbone = true;

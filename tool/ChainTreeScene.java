@@ -26,7 +26,7 @@ import geom3d.Sphere3d;
 public class ChainTreeScene {
 	
 	public J3DScene scene = J3DScene.createJ3DSceneInFrame();
-	private Map<ChainTree,GUINode[]> cTrees = new HashMap<ChainTree,GUINode[]>();
+	private Map<ChainTree,GUINode[]> cTrees;
 	
 	/*
 	 * Colours of the different part of the protein backbone.
@@ -36,7 +36,8 @@ public class ChainTreeScene {
 							     	new Color(180, 180, 180)};
 
 	public Color colorAlphaHelix = new Color(255, 255, 0);
-	public Color colourBetaSheet = new Color(0, 255, 0);
+	public Color colorBetaSheet = new Color(0, 255, 0);
+	public Color colorHeteroAtom = new Color(255, 255, 255, 50);
 	
 	
 	
@@ -45,6 +46,8 @@ public class ChainTreeScene {
 	 */
 	public ChainTreeScene() {
 		this.scene.setBackgroundColor(Color.WHITE);
+		
+		this.cTrees = new HashMap<ChainTree,GUINode[]>();
 	}
 	
 	/**
@@ -56,6 +59,7 @@ public class ChainTreeScene {
 		this();
 		
 		this.add(cTree);
+		
 		this.scene.centerCamera();
 		this.scene.autoZoom();
 	}
@@ -65,12 +69,13 @@ public class ChainTreeScene {
 	 * 
 	 * @param cTrees The trees to be on the scene.
 	 */
-	public ChainTreeScene(Collection<ChainTree> cTrees) {
+	public ChainTreeScene(ChainTree[] cTrees) {
 		this();
 		
 		for(ChainTree cTree : cTrees) {
 			this.add(cTree);
 		}
+		
 		this.scene.centerCamera();
 		this.scene.autoZoom();
 	}
@@ -83,6 +88,17 @@ public class ChainTreeScene {
 	 * @param cTree The chain tree to be added.
 	 */
 	public void add(ChainTree cTree) {
+		this.add(cTree, 100);
+	}
+	
+	/**
+	 * Add a chain tree to the scene.
+	 * 
+	 * @param cTree The chain tree to be added.
+	 * @param visibility The overall visibility of the chain tree.
+	 */
+	public void add(ChainTree cTree, int visibility) {
+		
 		if(!this.cTrees.containsKey(cTree)) {
 			List<Point3d> points = cTree.getBackboneAtomPositions();
 			
@@ -100,20 +116,20 @@ public class ChainTreeScene {
 				if (cTree.isInAlphaHelix(i)) {
 					color = this.colorAlphaHelix;
 				} else if (cTree.isInBetaSheet(i)) {
-					color = this.colourBetaSheet;
+					color = this.colorBetaSheet;
+				} else if (cTree.isHeteroAtomBond(i)) {
+					color = this.colorHeteroAtom;
 				} else {
 					color = this.colorBackbone[i%3];
 				}
 				
 				// draw shapes
-				this.scene.addShape(node.sphere, new Color(color.getRed(), color.getGreen(), color.getBlue(), 100));
-				this.scene.addShape(node.cylinder, color);
+				this.scene.addShape(node.sphere, modifyTransparency(new Color(color.getRed(), color.getGreen(), color.getBlue(), 100), visibility));
+				this.scene.addShape(node.cylinder, modifyTransparency(color, visibility));
 			}
 			
 			// store the chain tree GUI info
 			this.cTrees.put(cTree, guiNodes);
-			
-			this.repaint();
 		}
 	}
 	
@@ -124,8 +140,6 @@ public class ChainTreeScene {
 		for (ChainTree cTree : this.cTrees.keySet()) {
 			this.repaint(cTree);
 		}
-		
-		this.scene.repaint();
 	}
 	
 	/**
@@ -133,16 +147,30 @@ public class ChainTreeScene {
 	 * 
 	 * @param cTree The tree to repaint.
 	 */
-	private void repaint(ChainTree cTree) {
+	public void repaint(ChainTree cTree) {
 		List<Point3d> points = cTree.getBackboneAtomPositions();
 		GUINode[] guiNodes = this.cTrees.get(cTree);
-		
+
 		for (int i = 0, j = points.size()-1; i < j; i++) {
 			Point3d current = points.get(i);
 			Point3d next = points.get(i+1);
 			
 			guiNodes[i].update(current, next);
 		}
+		
+		this.scene.repaint();
+	}
+	
+	/**
+	 * Modifies the transparency of a color.
+	 * @param color The colour to modify.
+	 * @param visibility The transparency.
+	 * @return New color with modified transparency.
+	 */
+	private static Color modifyTransparency(Color color, int visibility) {
+		int alpha = (int) Math.round(color.getAlpha() / 100.0 * visibility);
+		
+		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
 	}
 	
 	/**

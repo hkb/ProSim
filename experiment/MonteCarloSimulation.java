@@ -1,6 +1,9 @@
 package experiment;
 
+import java.util.LinkedList;
 import java.util.List;
+
+import javax.vecmath.Point3d;
 
 import tool.ChainTreeScene;
 import dataStructure.AdjustableChainTree;
@@ -9,11 +12,11 @@ import energyFunction.DihedralAngles;
 import energyFunction.EnergyFunction;
 
 public class MonteCarloSimulation {
-	public static void main(String[] args){
+	public static void main(String[] args) throws InterruptedException{
 		/*
 		 * Setup
 		 */
-		String pdbId = "1PUX"; // 1PUX <3
+		String pdbId = "1JN1"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1
 		double errorTolerance = 0.01;
 		double targetEnergy = 0.01;
 		
@@ -32,16 +35,16 @@ public class MonteCarloSimulation {
 		
 		cTree.unfold();
 
+		// setup scene
 		ChainTreeScene scene = new ChainTreeScene(cTree);
-		ChainTreeScene targetScene = new ChainTreeScene(target);
+		//scene.add(target, 5);
 		
-		scene.scene.setWindowTitle(pdbId + " - Folding");
-		targetScene.scene.setWindowTitle(pdbId + " - Target");
-		
+		// ready, set
 		double energy = energyFunction.compute();
 		double energyUpperBound = energy;
 		int iterations = 0;
 		
+		// GO!
 		while(energy > targetEnergy) {
 			iterations++;
 			
@@ -55,7 +58,7 @@ public class MonteCarloSimulation {
 				cTree.changeRotationAngle(i, -angle);	
 				
 			} else {
-				// if not clashing then test for energy efficiency
+				// if not clashing then test for energy efficiencyprivate
 				double tmpEnergy = energyFunction.compute();
 				
 				if (tmpEnergy >= energyUpperBound) {
@@ -71,7 +74,7 @@ public class MonteCarloSimulation {
 						energyUpperBound = tmpEnergy * errorTolerance; 
 						
 						System.out.println(iterations + ": " + energy);
-						scene.repaint();
+						scene.repaint(cTree);
 					}
 				}
 			}

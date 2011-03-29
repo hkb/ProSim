@@ -6,6 +6,7 @@ import javax.vecmath.Point3d;
 
 import tool.ChainTreeScene;
 import dataStructure.AdjustableChainTree;
+
 public class SubchainExtractor {
 	public static void main(String[] args) throws InterruptedException {
 		
@@ -13,7 +14,6 @@ public class SubchainExtractor {
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		
 		ChainTreeScene scene = new ChainTreeScene();
-		//ChainTreeScene scene2 = new ChainTreeScene(cTree);
 		
 		AdjustableChainTree t1 = cTree.getSubchain(0,8);
 		AdjustableChainTree t2 = cTree.getSubchain(9, 17);
@@ -29,5 +29,16 @@ public class SubchainExtractor {
 		
 		scene.scene.centerCamera();
 		scene.scene.autoZoom();
+		
+		while(true) {
+			t1.changeRotationAngle(0, 1);
+			scene.repaint();
+
+			if (t1.areClashing(t12)) {
+				AdjustableChainTreeDebugger.paintVolume(t1, t1.c1, scene);
+				AdjustableChainTreeDebugger.paintVolume(t12, t1.c2, scene);
+				break;
+			}
+		}
 	}
 }

@@ -26,6 +26,7 @@ public class ChainTree {
 	
 	protected Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
 	protected Set<Integer> betaSheet = new HashSet<Integer>();	// set of all bonds in beta sheets 
+	protected Set<Integer> heteroAtoms = new HashSet<Integer>();// set of all hetero atoms
 	
 	private int lastRotatedBond;								// the last rotated bond
 	
@@ -38,8 +39,10 @@ public class ChainTree {
 	 */
 	public ChainTree(String pdbId) {
 		this(new PDBParser(pdbId).backbone);
+		
 		this.alphaHelix = new PDBParser(pdbId).alphaHelix;
 		this.betaSheet = new PDBParser(pdbId).betaSheet;
+		this.heteroAtoms = new PDBParser(pdbId).heteroAtoms;
 	}
 	
 	/**
@@ -64,6 +67,11 @@ public class ChainTree {
 		
 		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
 			end = points.get(i+1);
+			
+			// check validity of the backbone chain
+			if (start.distance(end) > CTLeaf.atomRadius) {
+				throw new IllegalArgumentException("The provided backbone is not intact!");
+			}
 			
 			// create new leaf from its relative position to the next leaf
 			this.backboneBonds[i] = new CTLeaf(new Point3d(end.x-start.x, end.y-start.y, end.z-start.z), i);
@@ -154,10 +162,11 @@ public class ChainTree {
 	 * 
 	 * @param i The starting atom (included).
 	 * @param j The ending atom (included).
+	 * @require Neither i nor j may split a amino acid.
 	 */
 	public ChainTree getSubchain(int i, int j) {
-		if (i % 3 != 0 || j % 3 != 0) {
-			throw new IllegalArgumentException("You can't break an amino acid!");
+		if (i % 3 != 0 || j % 3 != 2) {
+			throw new IllegalArgumentException("You can't split an amino acid!");
 		}
 		
 		ChainTree cTree = new ChainTree(this.getBackboneAtomPositions().subList(i, j+1));
@@ -252,11 +261,14 @@ public class ChainTree {
 			return new TransformationMatrix();
 		}
 		
+		// NOTE: from this point onwards we look for the transformation up to, but not including, the j-th coordinate system
+		j--;  
+		
 		// find nearest common ancestor
 		CTNode ancestor = this.root;
 		
 		while (ancestor.left != null) {
-			if (j-1 <= ancestor.left.high) {
+			if (j <= ancestor.left.high) {
 				ancestor = ancestor.left;
 			} else if (ancestor.right.low <= i) {
 				ancestor = ancestor.right;
@@ -266,7 +278,7 @@ public class ChainTree {
 		}
 		
 		// if the ancestor exactly covers the nodes then just return it
-		if (ancestor.low == i && ancestor.high == j-1) {
+		if (ancestor.low == i && ancestor.high == j) {
 			return new TransformationMatrix(ancestor.transformationMatrix);
 		}
 		
@@ -295,12 +307,12 @@ public class ChainTree {
 		// traverse right subtree of ancestor
 		node = ancestor.right;
 		while (node != null) {
-			if (node.high == j-1) {
+			if (node.high == j) {
 				transformationMatrix.multR(node.transformationMatrix);
 				break;
 			} else {
 				// witch subtree to choose
-				if (j-1 >= node.right.low) { // right
+				if (j >= node.right.low) { // right
 					transformationMatrix.multR(node.left.transformationMatrix);
 					node = node.right;
 				} else { // left
@@ -328,6 +340,16 @@ public class ChainTree {
 	 */
 	public boolean isInBetaSheet(int i) {
 		return this.betaSheet.contains(i);
+	}
+	
+	/**
+	 * Is the bond to the right of the a hetero atom.
+	 * 
+	 * @param i
+	 * @return
+	 */
+	public boolean isHeteroAtomBond(int i) {
+		return this.heteroAtoms.contains(i);
 	}
 	
 	/**
@@ -429,6 +451,11 @@ public class ChainTree {
 	 * @return true if the trees clash else false.
 	 */
 	private boolean areClashing(CTNode thisNode, CTNode otherNode, ChainTree other) {
+		// has this node been moved in the world?
+		// this works because only the chain segment to the right of the last rotation is moved in the world
+		if (thisNode.high < this.lastRotatedBond)
+			return false;
+		
 		// check for overlap
 		BoundingVolume thisVolume = thisNode.boundingVolume.transform(this.getWorldTransformation(thisNode.low));
 		BoundingVolume otherVolume = otherNode.boundingVolume.transform(other.getWorldTransformation(otherNode.low));

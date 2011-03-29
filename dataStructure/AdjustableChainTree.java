@@ -129,8 +129,10 @@ public class AdjustableChainTree extends ChainTree {
 		
 		// lock alpha helices
 		for (int i : super.alphaHelix) {
-			this.backboneBonds[i].isLocked = true;
-			helixBonds.add(i);
+			if (i < this.backboneBonds.length) {
+				this.backboneBonds[i].isLocked = true;
+				helixBonds.add(i);
+			}
 		}
 		
 		// detect alpha helix subsections
@@ -164,8 +166,10 @@ public class AdjustableChainTree extends ChainTree {
 		
 		// lock beta sheets
 		for (int i : super.betaSheet) {
-			this.backboneBonds[i].isLocked = true;
-			betaSheets.add(i);
+			if (i < this.backboneBonds.length) {
+				this.backboneBonds[i].isLocked = true;
+				betaSheets.add(i);
+			}
 		}
 		
 		// detect beta sheet subsections
