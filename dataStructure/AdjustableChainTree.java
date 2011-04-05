@@ -23,6 +23,7 @@ public class AdjustableChainTree extends ChainTree {
 	public AdjustableChainTree(String pdbId) {
 		super(pdbId);
 
+		// optimise the tree
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
@@ -37,6 +38,27 @@ public class AdjustableChainTree extends ChainTree {
 	public AdjustableChainTree(List<Point3d> points) {
 		super(points);
 
+		// optimise the tree
+		this.lockAndGroupPeptidePlanes();
+		this.lockAndGroupAlphaHelices();
+		this.lockAndGroupBetaSheets();
+		this.rebalance();
+	}
+	
+	/**
+	 * Creates a adjustable chain tree from a chain tree.
+	 * 
+	 * @param cTree The chain tree to create the adjustable chain tree from.
+	 */
+	public AdjustableChainTree(ChainTree cTree) {
+		super(cTree.getBackboneAtomPositions());
+		
+		// copy secondary structure information
+		this.alphaHelix = cTree.alphaHelix;
+		this.betaSheet = cTree.betaSheet;
+		this.heteroAtoms = cTree.heteroAtoms;
+		
+		// optimise the tree
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
@@ -47,26 +69,7 @@ public class AdjustableChainTree extends ChainTree {
 	
 	@Override
 	public AdjustableChainTree getSubchain(int i, int j) {
-		if (i % 3 != 0 || j % 3 != 2) {
-			throw new IllegalArgumentException("You can't break an amino acid!");
-		}
-		
-		AdjustableChainTree cTree = new AdjustableChainTree(this.getBackboneAtomPositions().subList(i, j+1));
-		
-		// copy secondary structure information
-		for (int k = i; k <= j; k++) {
-			if (this.alphaHelix.contains(k)) {
-				cTree.alphaHelix.add(k-i);
-			}
-		}
-
-		for (int k = i; k <= j; k++) {
-			if (this.betaSheet.contains(k)) {
-				cTree.betaSheet.add(k-i);
-			}
-		}
-		
-		return cTree;
+		return new AdjustableChainTree(super.getSubchain(i, j));
 	}
 	
 	/**

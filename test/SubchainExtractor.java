@@ -1,6 +1,8 @@
 package test;
 
 
+import java.util.List;
+
 import javax.vecmath.Point3d;
 
 
@@ -30,14 +32,22 @@ public class SubchainExtractor {
 		scene.scene.centerCamera();
 		scene.scene.autoZoom();
 		
+		// toy rotation
+		List<Integer> rotateableBonds = t1.rotatableBonds();
+		int direction = 1;
+		int bond = 0;
+		
 		while(true) {
-			t1.changeRotationAngle(0, 1);
+			t1.changeRotationAngle(rotateableBonds.get(bond), direction);
 			scene.repaint();
+			Thread.sleep(500);
 
 			if (t1.areClashing(t12)) {
-				AdjustableChainTreeDebugger.paintVolume(t1, t1.c1, scene);
-				AdjustableChainTreeDebugger.paintVolume(t12, t1.c2, scene);
-				break;
+				if (bond + 1 == rotateableBonds.size()) {
+					direction *= -1;
+				}
+				
+				bond += direction;
 			}
 		}
 	}

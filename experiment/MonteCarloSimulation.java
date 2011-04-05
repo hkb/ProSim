@@ -14,16 +14,15 @@ import energyFunction.EnergyFunction;
 public class MonteCarloSimulation {
 	public static void main(String[] args) throws InterruptedException{
 		/*
-		 * Setup
+		 * Configuration.
 		 */
-		String pdbId = "1JN1"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1
+		String pdbId = "1PUX"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1
 		double errorTolerance = 0.01;
-		double targetEnergy = 0.01;
 		
-		
+
 		
 		/*
-		 * Experiment.
+		 * Setup.
 		 */
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		AdjustableChainTree target = new AdjustableChainTree(pdbId);
@@ -45,7 +44,7 @@ public class MonteCarloSimulation {
 		int iterations = 0;
 		
 		// GO!
-		while(energy > targetEnergy) {
+		while(true) {
 			iterations++;
 			
 			int i = rotateableBonds.get((int) (Math.random() * rotateableBonds.size()));
@@ -58,7 +57,7 @@ public class MonteCarloSimulation {
 				cTree.changeRotationAngle(i, -angle);	
 				
 			} else {
-				// if not clashing then test for energy efficiencyprivate
+				// if not clashing then test for energy efficiency
 				double tmpEnergy = energyFunction.compute();
 				
 				if (tmpEnergy >= energyUpperBound) {
@@ -74,12 +73,11 @@ public class MonteCarloSimulation {
 						energyUpperBound = tmpEnergy * errorTolerance; 
 						
 						System.out.println(iterations + ": " + energy);
+						
 						scene.repaint(cTree);
 					}
 				}
 			}
 		}
-		
-		System.out.println("Simulation done.");
 	}
 }

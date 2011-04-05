@@ -40,9 +40,11 @@ public class ChainTree {
 	public ChainTree(String pdbId) {
 		this(new PDBParser(pdbId).backbone);
 		
-		this.alphaHelix = new PDBParser(pdbId).alphaHelix;
-		this.betaSheet = new PDBParser(pdbId).betaSheet;
-		this.heteroAtoms = new PDBParser(pdbId).heteroAtoms;
+		PDBParser parser = new PDBParser(pdbId); // we have to parse the file as java require that the first statement is a constructor
+												 // call and i don't want to make a static method.
+		this.alphaHelix = parser.alphaHelix;
+		this.betaSheet = parser.betaSheet;
+		this.heteroAtoms = parser.heteroAtoms;
 	}
 	
 	/**
@@ -181,6 +183,12 @@ public class ChainTree {
 		for (int k = i; k <= j; k++) {
 			if (this.betaSheet.contains(k)) {
 				cTree.betaSheet.add(k-i);
+			}
+		}
+		
+		for (int k = i; k <= j; k++) {
+			if (this.heteroAtoms.contains(k)) {
+				cTree.heteroAtoms.add(k-i);
 			}
 		}
 		
@@ -544,5 +552,28 @@ public class ChainTree {
 	public void rotate(double angle) {
 		this.angle -= angle;
 		this.worldTransformation.rotate(this.angle);
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder tmpString = new StringBuilder();
+		
+		int i = 0;
+		for (CTLeaf bond : this.backboneBonds) {
+			tmpString.append(bond);
+			
+			if (this.isInAlphaHelix(i)) {
+				tmpString.append("(HELIX)");
+			} else if (this.isInBetaSheet(i)) {
+				tmpString.append("(SHEET)");
+			} else if (this.isHeteroAtomBond(i)) {
+				tmpString.append("(HETERO)");
+			}
+			
+			tmpString.append("\n");
+			i++;
+		}
+		
+		return tmpString.toString();
 	}
 }
