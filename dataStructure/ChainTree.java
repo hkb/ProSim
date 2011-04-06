@@ -409,8 +409,8 @@ public class ChainTree {
 			return isClashing(left.left, right) || isClashing(left.right, right);
 			
 		} else {
-			// only split the larger volume
-			// TODO WHY DOES THIS WORK?!
+			// only split the larger volume to avoid future repeated checks
+			// TODO prove that this works
 			if (left.boundingVolume.volume() > right.boundingVolume.volume()) {
 				return isClashing(left.left, right) || isClashing(left.right, right);
 			} else {
@@ -486,10 +486,14 @@ public class ChainTree {
 		       	   this.areClashing(thisNode.right, otherNode, other);
 			
 		} else {
-			return this.areClashing(thisNode.left, otherNode, other)  ||
-		       	   this.areClashing(thisNode.right, otherNode, other) || 
-		           this.areClashing(thisNode, otherNode.left, other)  ||
-	       	       this.areClashing(thisNode, otherNode.right, other);
+			// only split the larger volume to avoid future repeated checks
+			if (thisNode.boundingVolume.volume() > otherNode.boundingVolume.volume()) {
+				return this.areClashing(thisNode.left, otherNode, other)  ||
+					   this.areClashing(thisNode.right, otherNode, other);
+			} else {
+				return this.areClashing(thisNode, otherNode.left, other)  ||
+					   this.areClashing(thisNode, otherNode.right, other);
+			}
 		}
 	}
 

@@ -6,7 +6,7 @@ import dataStructure.AdjustableChainTree;
 
 public class ProteinViewer {
 	public static void main(String[] args) {
-		String pdbId = "1XJH";
+		String pdbId = "2B7T";
 		
 		new ChainTreeScene(new AdjustableChainTree(pdbId));
 	}

@@ -104,15 +104,16 @@ public class ChainTreeScene {
 			
 			GUINode[] guiNodes = new GUINode[points.size()];
 			
-			for (int i = 0, j = points.size()-1; i < j; i++) {
+			for (int i = 0, j = points.size(); i < j; i++) {
 				Point3d current = points.get(i);
-				Point3d next = points.get(i+1);
+				Point3d next = (i+1 < j) ? points.get(i+1) : null;
 				
 				GUINode node = new GUINode(current, next);
 				guiNodes[i] = node;
 				
-				// add GUI elements to scene
 				Color color;
+				
+				// add GUI elements to scene
 				if (cTree.isInAlphaHelix(i)) {
 					color = this.colorAlphaHelix;
 				} else if (cTree.isInBetaSheet(i)) {
@@ -125,7 +126,9 @@ public class ChainTreeScene {
 				
 				// draw shapes
 				this.scene.addShape(node.sphere, modifyTransparency(new Color(color.getRed(), color.getGreen(), color.getBlue(), 100), visibility));
-				this.scene.addShape(node.cylinder, modifyTransparency(color, visibility));
+				
+				if (next != null)
+					this.scene.addShape(node.cylinder, modifyTransparency(color, visibility));
 			}
 			
 			// store the chain tree GUI info
@@ -151,9 +154,9 @@ public class ChainTreeScene {
 		List<Point3d> points = cTree.getBackboneAtomPositions();
 		GUINode[] guiNodes = this.cTrees.get(cTree);
 
-		for (int i = 0, j = points.size()-1; i < j; i++) {
+		for (int i = 0, j = points.size(); i < j; i++) {
 			Point3d current = points.get(i);
-			Point3d next = points.get(i+1);
+			Point3d next =(i+1 < j) ? points.get(i+1) : null;
 			
 			guiNodes[i].update(current, next);
 		}
@@ -207,8 +210,11 @@ public class ChainTreeScene {
 		
 		public void update(Point3d current, Point3d next) {
 			this.sphere.center = new geom3d.Point3d(current.x, current.y, current.z);
-			this.cylinder.getSegment().setA(new geom3d.Point3d(current.x, current.y, current.z));
-			this.cylinder.getSegment().setB(new geom3d.Point3d(next.x, next.y, next.z));		
+			
+			if (next != null) {
+				this.cylinder.getSegment().setA(new geom3d.Point3d(current.x, current.y, current.z));
+				this.cylinder.getSegment().setB(new geom3d.Point3d(next.x, next.y, next.z));
+			}
 		}
 		
 		private Vector pointToVector(Point3d point) {
