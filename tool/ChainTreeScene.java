@@ -27,6 +27,7 @@ public class ChainTreeScene {
 	
 	public J3DScene scene = J3DScene.createJ3DSceneInFrame();
 	private Map<ChainTree,GUINode[]> cTrees;
+	private long lastRepaintTime;
 	
 	/*
 	 * Colours of the different part of the protein backbone.
@@ -46,6 +47,8 @@ public class ChainTreeScene {
 	 */
 	public ChainTreeScene() {
 		this.scene.setBackgroundColor(Color.WHITE);
+		
+		this.lastRepaintTime = System.currentTimeMillis();
 		
 		this.cTrees = new HashMap<ChainTree,GUINode[]>();
 	}
@@ -161,7 +164,10 @@ public class ChainTreeScene {
 			guiNodes[i].update(current, next);
 		}
 		
-		this.scene.repaint();
+		if (System.currentTimeMillis() - this.lastRepaintTime > 200) { // max 5 repaints per second
+			this.lastRepaintTime = System.currentTimeMillis();
+			this.scene.repaint();
+		}
 	}
 	
 	/**

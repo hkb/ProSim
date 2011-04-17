@@ -18,8 +18,8 @@ public class MonteCarloLoopClosure {
 		/*
 		 * Configuration.
 		 */
-		String pdbId = "2B7T"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T
-		int segmentNo = 3;
+		String pdbId = "1F3U"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T
+		int segmentNo = 2;
 		
 		/*
 		 * Setup.
@@ -71,6 +71,7 @@ public class MonteCarloLoopClosure {
 			
 			t1.changeRotationAngle(bond, angle);
 			
+			
 			if (!t1.isClashing() && !t1.areClashing(t2)) {
 			
 				double tmpEnergy = energyFunction.compute();
@@ -80,11 +81,13 @@ public class MonteCarloLoopClosure {
 					energy = tmpEnergy;
 					
 					// new conformation
-					if (energy < 0.5 || iterationTime > 5000) {
+					if (energy < 1 || iterationTime > 5000) {
 						if (iterationTime < 5000) {
 							scene.add(t1.getSubchain(start-1, t1.length()), 1);
 							System.out.println(count + " computed in: " + iterationTime / 1000 + " sec.");
 							count++;
+						} else {
+							System.err.println("Conformation discarded!");
 						}
 						
 						// unfold segment
@@ -93,7 +96,7 @@ public class MonteCarloLoopClosure {
 								t1.changeRotationAngle(i, Math.random()*180);
 							} while(t1.isClashing() || t1.areClashing(t2));
 						}
-						
+												
 						energy = energyFunction.compute();
 						startTime = System.currentTimeMillis();
 					}
