@@ -29,6 +29,21 @@ public class AdjustableChainTree extends ChainTree {
 		this.lockAndGroupBetaSheets();
 		this.rebalance();
 	}
+
+	/**
+	 * Creates a chain tree from an array of chain trees.
+	 * 
+	 * @param cTrees The trees to create the chain tree from.
+	 */
+	public AdjustableChainTree(ChainTree[] cTrees) {
+		super(cTrees);
+		
+		// optimise the tree
+		this.lockAndGroupPeptidePlanes();
+		this.lockAndGroupAlphaHelices();
+		this.lockAndGroupBetaSheets();
+		this.rebalance();
+	}
 	
 	/**
 	 * Creates a chain tree from a list of 3D points.
@@ -71,24 +86,6 @@ public class AdjustableChainTree extends ChainTree {
 	public AdjustableChainTree getSubchain(int i, int j) {
 		return new AdjustableChainTree(super.getSubchain(i, j));
 	}
-	
-	/**
-	 * Returns a list of all the rotatable (non locked) bonds of
-	 * the backbone.
-	 * 
-	 * @return The rotatable bonds of the backbone.
-	 */
-	public List<Integer> rotatableBonds() {
-		ArrayList<Integer> rotatableBonds = new ArrayList<Integer>();
-		
-		for (CTLeaf node : this.backboneBonds) {
-			if (!node.isLocked) {
-				rotatableBonds.add(node.low);
-			}
-		}
-		
-		return rotatableBonds;
-	}	
 	
 	@Override
 	public void changeRotationAngle(int i, double angle) {

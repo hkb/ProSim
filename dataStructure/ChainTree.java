@@ -2,6 +2,7 @@ package dataStructure;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -45,6 +46,42 @@ public class ChainTree {
 		this.alphaHelix = parser.alphaHelix;
 		this.betaSheet = parser.betaSheet;
 		this.heteroAtoms = parser.heteroAtoms;
+	}
+	
+	/**
+	 * Creates a chain tree from an array of chain trees.
+	 * 
+	 * @param cTrees The trees to create the chain tree from.
+	 */
+	public ChainTree(ChainTree[] cTrees) {
+		this(getChainTreesCombinedBackboneAtomPositions(cTrees));
+		
+		// stuff to copy protein data
+		int i = 0;
+		for (ChainTree cTree : cTrees) {
+			int j = i + cTree.length();
+			
+			// copy secondary structure information
+			for (int k = i; k < j; k++) {
+				if (cTree.alphaHelix.contains(k-i)) {
+					this.alphaHelix.add(k);
+				}
+			}
+
+			for (int k = i; k < j; k++) {
+				if (cTree.betaSheet.contains(k-i)) {
+					this.betaSheet.add(k);
+				}
+			}
+			
+			for (int k = i; k < j; k++) {
+				if (cTree.heteroAtoms.contains(k-i)) {
+					this.heteroAtoms.add(k);
+				}
+			}
+			
+			i = j;
+		}
 	}
 	
 	/**
@@ -145,19 +182,57 @@ public class ChainTree {
 	 * @return The points of the atoms.
 	 */
 	public List<Point3d> getBackboneAtomPositions() {
+		return this.getBackboneAtomPositions(0, this.length()-1);
+	}
+
+	/**
+	 * Returns the absolute positions of the atoms in a subsegment of the protein backbone.
+	 *  
+	 * @param i The first bond of the segment.
+	 * @param j The last bond of the segment.
+	 * @return The points of the atoms in the segment.
+	 */
+	public List<Point3d> getBackboneAtomPositions(int i, int j) {
 		TransformationMatrix transformationMatrix = new TransformationMatrix(this.worldTransformation);
+		
+		// if we aren't starting from the first bond then modify the transformation  
+		if (i > 0) {
+			transformationMatrix.multR(this.getTransformationMatrix(0, i));
+		}
+		
 		
 		List<Point3d> points = new ArrayList<Point3d>();
 		
-		points.add(this.position);
-		
-		for (int i = 0; i < this.backboneBonds.length; i++) {
-			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
+		// place all atoms related to bonds
+		for (; i <= j; i++) {
 			points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
+			
+			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
 		}
+		
+		// place an extra atom after the last bond
+		points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
 
 		return points;
 	}
+
+	/**
+	 * Returns a list of all the rotatable (non locked) bonds ofprivate
+	 * the backbone.
+	 * 
+	 * @return The rotatable bonds of the backbone.
+	 */
+	public List<Integer> rotatableBonds() {
+		ArrayList<Integer> rotatableBonds = new ArrayList<Integer>();
+		
+		for (CTLeaf node : this.backboneBonds) {
+			if (!node.isLocked) {
+				rotatableBonds.add(node.low);
+			}
+		}
+		
+		return rotatableBonds;
+	}	
 	
 	/**
 	 * Returns a chain tree representing a sub chain of the backbone.
@@ -171,7 +246,7 @@ public class ChainTree {
 			throw new IllegalArgumentException("You can't split an amino acid!");
 		}
 		
-		ChainTree cTree = new ChainTree(this.getBackboneAtomPositions().subList(i, j+1));
+		ChainTree cTree = new ChainTree(this.getBackboneAtomPositions(i, j));
 		
 		// copy secondary structure information
 		for (int k = i; k <= j; k++) {
@@ -272,7 +347,7 @@ public class ChainTree {
 		// NOTE: from this point onwards we look for the transformation up to, but not including, the j-th coordinate system
 		j--;  
 		
-		// find nearest common ancestor
+		// find nearest common ancestor from root
 		CTNode ancestor = this.root;
 		
 		while (ancestor.left != null) {
@@ -579,5 +654,28 @@ public class ChainTree {
 		}
 		
 		return tmpString.toString();
+	}
+	
+	
+	/*
+	 * Static methods.
+	 */
+	
+	/**
+	 * Combines the absolute position of all backbone atoms in an array of ChainTrees.
+	 * 
+	 * The order of the trees determines the order of the backbone atoms.
+	 * 
+	 * @param cTrees The trees to calculate the positions from.
+	 * @return A list of the combined backbone atom positions.
+	 */
+	private static List<Point3d> getChainTreesCombinedBackboneAtomPositions(ChainTree[] cTrees) {
+		List<Point3d> points = new LinkedList<Point3d>();
+		
+		for (ChainTree cTree : cTrees) {
+			points.addAll(cTree.getBackboneAtomPositions());
+		}
+		
+		return points;
 	}
 }

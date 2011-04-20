@@ -10,8 +10,8 @@ import dataStructure.ChainTree;
 
 public class BackboneSegmentAnalyser {
 
-	public static List<Tuple2i> extractIntermediateSegments(ChainTree cTree) {
-		List<Tuple2i> intermediateSegments = new ArrayList<Tuple2i>();
+	public static List<Tuple2<Integer, Integer>> extractIntermediateSegments(ChainTree cTree) {
+		List<Tuple2<Integer, Integer>> intermediateSegments = new ArrayList<Tuple2<Integer, Integer>>();
 		
 		int start = -1;		
 		for (int i = 0, j = cTree.length(); i < j; i++) {
@@ -19,7 +19,7 @@ public class BackboneSegmentAnalyser {
 				if (start == -1)
 					continue;
 				
-				intermediateSegments.add(new Point2i(start, i-1));
+				intermediateSegments.add(new Tuple2<Integer, Integer>(start, i-1));
 				start = -1;
 			} else if (start == -1) {
 				start = i;

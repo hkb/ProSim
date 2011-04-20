@@ -1,8 +1,7 @@
 package algorithm;
 
-import java.util.List;
-
 import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
 
 import tool.Tuple2;
 import dataStructure.ChainTree;
@@ -55,14 +54,23 @@ public class CyclicCoordinateDescent {
 	 * @return The rotation angle that minimises the loop terminals distance to the target.
 	 */
 	public double getRotationAngle(int bond) {
+		/*
+		 * Compute vectors.
+		 */
+		Vector3d O = new Vector3d(1,2,3);
 		
 		
 		/*
-		 * Determine if the loop is now closed.
+		 * Compute alpha.
 		 */
+		int alpha = 0;
 		
+		/*
+		 * Compute second derivative.
+		 */
+		//Math.atan2(arg0, arg1)
 		
-		return 0;
+		return alpha;
 	}
 	
 	/**

@@ -45,6 +45,6 @@ public class CTLeaf extends CTNode {
 	
 	@Override
 	public String toString() {
-		return ""+this.low;
+		return "";//+this.low;
 	}
 }

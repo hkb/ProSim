@@ -16,7 +16,7 @@ public class MonteCarloSimulation {
 		/*
 		 * Configuration.
 		 */
-		String pdbId = "1PUX"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1
+		String pdbId = "8ABP"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1
 		double errorTolerance = 0.01;
 		
 

@@ -7,6 +7,7 @@ import javax.vecmath.Tuple2i;
 
 import tool.BackboneSegmentAnalyser;
 import tool.ChainTreeScene;
+import tool.Tuple2;
 import dataStructure.AdjustableChainTree;
 import dataStructure.ChainTree;
 import energyFunction.AtomDistance;
@@ -18,7 +19,7 @@ public class MonteCarloLoopClosure {
 		/*
 		 * Configuration.
 		 */
-		String pdbId = "2B7T"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T
+		String pdbId = "1FUS"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T
 		int segmentNo = 3;
 		
 		/*
@@ -26,16 +27,16 @@ public class MonteCarloLoopClosure {
 		 */
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		
-		Tuple2i segment = BackboneSegmentAnalyser.extractIntermediateSegments(cTree).get(segmentNo);
-		int start = segment.x;
-		int end = segment.y;
+		Tuple2<Integer, Integer> segment = BackboneSegmentAnalyser.extractIntermediateSegments(cTree).get(segmentNo);
+		int start = segment.e1;
+		int end = segment.e2;
 
 		// create subtrees
 		AdjustableChainTree t0 = cTree.getSubchain(0, start+1);
 		AdjustableChainTree t1 = cTree.getSubchain(0, end);
 		AdjustableChainTree t2 = cTree.getSubchain(end+1, cTree.length());
 		
-		ChainTree[] cTrees = {t0, t2}; 
+		ChainTree[] cTrees = {t1, t2}; 
 		ChainTreeScene scene = new ChainTreeScene(cTrees);
 		
 		// define energy function for the last atom
@@ -57,7 +58,7 @@ public class MonteCarloLoopClosure {
 			} while(t1.isClashing() || t1.areClashing(t2));
 		}
 		
-		//scene.repaint(t1);
+		scene.repaint(t1);
 		
 		// make ready simulation
 		double energy = energyFunction.compute();
@@ -80,7 +81,7 @@ public class MonteCarloLoopClosure {
 					energy = tmpEnergy;
 					
 					// new conformation
-					if (energy < 0.5 || iterationTime > 5000) {
+					if (energy < 1 || iterationTime > 5000) {
 						if (iterationTime < 5000) {
 							scene.add(t1.getSubchain(start-1, t1.length()), 1);
 							System.out.println(count + " computed in: " + iterationTime / 1000 + " sec.");
@@ -98,7 +99,7 @@ public class MonteCarloLoopClosure {
 						startTime = System.currentTimeMillis();
 					}
 					
-					//scene.repaint(t1);
+					scene.repaint(t1);
 					continue;
 				}
 				

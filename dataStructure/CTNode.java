@@ -6,12 +6,11 @@ import boundingVolume.BoundingVolume;
 public class CTNode {
 	
 	public CTNode left, right, parent;					// connected nodes in the tree
-	protected double energy;							// the energy of the current node
 	public BoundingVolume boundingVolume;				// the bounding volume of the node
 	public TransformationMatrix transformationMatrix;	// the nodes transformation matrix
 	public int height;									// the height of the nodes subtree
 	public int low, high;								// the lowest and highest covered backbone bond
-	
+
 	public boolean isLocked = false;					// is this node locked?
 	
 	
@@ -88,10 +87,7 @@ public class CTNode {
 		this.transformationMatrix = new TransformationMatrix(this.left.transformationMatrix, this.right.transformationMatrix);
 
 		// bounding volume
-		this.boundingVolume = this.left.boundingVolume.combine(this.left.boundingVolume, this.right.boundingVolume.transform(this.transformationMatrix));
-		
-		// sub chain energy
-		this.energy = this.left.energy + this.right.energy;
+		this.boundingVolume = this.left.boundingVolume.combine(this.left.boundingVolume, this.right.boundingVolume.transform(this.left.transformationMatrix));
 	}
 	
 	@Override
