@@ -42,7 +42,7 @@ public class PDBParser {
 				if (type.equals("ATOM")) {
 					parseAtom(record);
 				} else if (type.equals("HETATM")) {
-					parseHeteroAtom(record);
+					//parseHeteroAtom(record);
 				} else if (type.equals("HELIX")) {
 					parseHelix(record);
 				} else if (type.equals("SHEET")) {

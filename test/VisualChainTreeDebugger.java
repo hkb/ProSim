@@ -16,7 +16,7 @@ import edu.geom3D.Capsule;
 
 public class VisualChainTreeDebugger {
 	public static void main(String[] args) {
-		String pdbId = "1FUS";
+		String pdbId = "1SIS";
 		
 		//
 		ChainTree cTree = new AdjustableChainTree(pdbId);
@@ -25,6 +25,9 @@ public class VisualChainTreeDebugger {
 		showBinaryTreeStructure(cTree);
 		showProtein(cTree);
 		showBoundingVolumes(cTree);
+		
+		// paint single volume
+		//paintBoundingVolume(cTree, cTree.backboneBonds[1].parent, new ChainTreeScene(cTree));
 	}
 	
 	public static void showBinaryTreeStructure(ChainTree cTree) {
@@ -47,7 +50,7 @@ public class VisualChainTreeDebugger {
 		paintSecondaryStructureBoundingVolumes(cTree, cTree.root, scene);
 		
 		// paint root
-		paintBoundingVolume(cTree, cTree.root, scene);
+		//paintBoundingVolume(cTree, cTree.root, scene);
 	}
 	
 	

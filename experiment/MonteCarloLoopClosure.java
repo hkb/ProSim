@@ -1,25 +1,29 @@
 package experiment;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.vecmath.Point3d;
 import javax.vecmath.Tuple2i;
 
 import tool.BackboneSegmentAnalyser;
 import tool.ChainTreeScene;
 import tool.Tuple2;
 import dataStructure.AdjustableChainTree;
+import dataStructure.CTLeaf;
 import dataStructure.ChainTree;
 import energyFunction.AtomDistance;
 import energyFunction.EndAtomDistance;
 import energyFunction.EnergyFunction;
+import geom3d.Sphere3d;
 
 public class MonteCarloLoopClosure {
 	public static void main(String[] args) throws InterruptedException {
 		/*
 		 * Configuration.
 		 */
-		String pdbId = "1F3U"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T
+		String pdbId = "1SIS"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T
 		int segmentNo = 2;
 		
 		/*
@@ -32,15 +36,15 @@ public class MonteCarloLoopClosure {
 		int end = segment.e2;
 
 		// create subtrees
-		AdjustableChainTree t0 = cTree.getSubchain(0, start+1);
-		AdjustableChainTree t1 = cTree.getSubchain(0, end);
-		AdjustableChainTree t2 = cTree.getSubchain(end+1, cTree.length());
+		AdjustableChainTree t0 = cTree.getSubchain(0, start);
+		AdjustableChainTree t1 = cTree.getSubchain(0, end-1);
+		AdjustableChainTree t2 = cTree.getSubchain(end+1, cTree.length()-1);
 		
-		ChainTree[] cTrees = {t1, t2}; 
+		ChainTree[] cTrees = {t0, t2}; 
 		ChainTreeScene scene = new ChainTreeScene(cTrees);
 		
 		// define energy function for the last atom
-		EnergyFunction energyFunction = new EndAtomDistance(t1, new AdjustableChainTree(t1));
+		EndAtomDistance energyFunction = new EndAtomDistance(t1, new AdjustableChainTree(t1));
 		
 		// find rotateable bonds in the segment
 		List<Integer> rotateableBonds = new ArrayList<Integer>();
@@ -58,7 +62,7 @@ public class MonteCarloLoopClosure {
 			} while(t1.isClashing() || t1.areClashing(t2));
 		}
 		
-		scene.repaint(t1);
+		//scene.repaint(t1);
 		
 		// make ready simulation
 		double energy = energyFunction.compute();
@@ -82,9 +86,9 @@ public class MonteCarloLoopClosure {
 					energy = tmpEnergy;
 					
 					// new conformation
-					if (energy < 1 || iterationTime > 5000) {
+					if (energy < 0.5 || iterationTime > 5000) {
 						if (iterationTime < 5000) {
-							scene.add(t1.getSubchain(start-1, t1.length()), 1);
+							scene.add(t1.getSubchain(start-1, t1.length()-1), 1);
 							System.out.println(count + " computed in: " + iterationTime / 1000 + " sec.");
 							count++;
 						} else {
@@ -102,7 +106,7 @@ public class MonteCarloLoopClosure {
 						startTime = System.currentTimeMillis();
 					}
 					
-					scene.repaint(t1);
+					//scene.repaint(t1);
 					continue;
 				}
 				

@@ -9,7 +9,7 @@ import dataStructure.ChainTree;
 public class EndAtomDistance implements EnergyFunction {
 	
 	private ChainTree testing, target;	// the chain trees to compute the energy
-	Point3d targetPoint;
+	public Point3d targetPoint;
 	
 	/**
 	 * 

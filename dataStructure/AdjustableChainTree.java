@@ -27,7 +27,7 @@ public class AdjustableChainTree extends ChainTree {
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
-		this.rebalance();
+		//this.rebalance();
 	}
 
 	/**
@@ -114,7 +114,17 @@ public class AdjustableChainTree extends ChainTree {
 	 */
 	private void lockAndGroupPeptidePlanes() {
 		for (int i = 2, j = super.backboneBonds.length; i < j; i = i+3) {
+			// lock the peptide plane
 			this.backboneBonds[i].isLocked = true;
+			
+			// NOTE: This dosn't follow the official definition of each peptide-node having
+			// two leafs in its right left but it gives the same result.
+			CTNode peptideNode = this.group(i-1, i+1);
+			
+			// compute tight bounding volume for the peptide-node
+			this.computeTightBoundingVolume(peptideNode);
+			
+			this.lockedSubtrees.add(peptideNode);
 		}
 	}
 	
@@ -143,7 +153,7 @@ public class AdjustableChainTree extends ChainTree {
 				
 		for (int i : helixBonds) {
 			if (i > last+1) {
-				this.groupAndLockSecondaryStructure(start, last);
+				this.groupAndLockSegment(start, last);
 				start = i;
 			}
 			
@@ -151,7 +161,7 @@ public class AdjustableChainTree extends ChainTree {
 		}
 		
 		if (last != start) {
-			this.groupAndLockSecondaryStructure(start, last);
+			this.groupAndLockSegment(start, last);
 		}
 	}
 	
@@ -180,7 +190,7 @@ public class AdjustableChainTree extends ChainTree {
 				
 		for (int i : betaSheets) {
 			if (i > last+1) {
-				this.groupAndLockSecondaryStructure(start, last);
+				this.groupAndLockSegment(start, last);
 				start = i;
 			}
 			
@@ -188,18 +198,18 @@ public class AdjustableChainTree extends ChainTree {
 		}
 		
 		if (last != start) {
-			this.groupAndLockSecondaryStructure(start, last);
+			this.groupAndLockSegment(start, last);
 		}
 	}
 	
 	/**
-	 * Groups and locks any given secondary structure covering the i-th to
-	 * j-th backbone atom.
+	 * Groups and locks any given segment of the backbone covering the 
+	 * i-th to j-th atom.
 	 * 
-	 * @param i The first backbone atom of the structure.
-	 * @param j The last backbone atom of the structure. 
+	 * @param i The first backbone bond of the structure.
+	 * @param j The last backbone bond of the structure. 
 	 */
-	private void groupAndLockSecondaryStructure(int i, int j) {
+	private void groupAndLockSegment(int i, int j) {
 		CTNode node = this.group(i, j);
 
 		this.lockSubtree(node);		
@@ -241,7 +251,11 @@ public class AdjustableChainTree extends ChainTree {
 	 * 
 	 * @param node The node to compute the tight bounding box for.
 	 */
-	private void computeTightBoundingVolume(CTNode node) {		
+	private void computeTightBoundingVolume(CTNode node) {
+		// leafs already have tight bounding volumes
+		if (node.isLeaf())
+			return;
+		
 		List<Point3d> points = new LinkedList<Point3d>();
 
 		// compute all points in the sub chain in the coordinate system of node.low
@@ -251,15 +265,14 @@ public class AdjustableChainTree extends ChainTree {
 			points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
 			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
 		}
+		points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
 		
 		// update
 		node.boundingVolume = new LinesegmentSweptSphere(points);
 		
 		// update subtrees
-		if (!node.isLeaf()) {
-			this.computeTightBoundingVolume(node.left);
-			this.computeTightBoundingVolume(node.right);
-		}
+		this.computeTightBoundingVolume(node.left);
+		this.computeTightBoundingVolume(node.right);
 	}
 	
 	/**

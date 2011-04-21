@@ -237,12 +237,12 @@ public class ChainTree {
 	/**
 	 * Returns a chain tree representing a sub chain of the backbone.
 	 * 
-	 * @param i The starting atom (included).
-	 * @param j The ending atom (included).
+	 * @param i The starting bond (included).
+	 * @param j The ending bond (included).
 	 * @require Neither i nor j may split a amino acid.
 	 */
 	public ChainTree getSubchain(int i, int j) {
-		if (i % 3 != 0 || j % 3 != 2) {
+		if (i % 3 != 0 || j % 3 != 1) {
 			throw new IllegalArgumentException("You can't split an amino acid!");
 		}
 		
@@ -350,7 +350,7 @@ public class ChainTree {
 		// find nearest common ancestor from root
 		CTNode ancestor = this.root;
 		
-		while (ancestor.left != null) {
+		while (!ancestor.isLeaf()) {
 			if (j <= ancestor.left.high) {
 				ancestor = ancestor.left;
 			} else if (ancestor.right.low <= i) {
@@ -478,18 +478,22 @@ public class ChainTree {
 		
 		// continue search
 		if(left.isLeaf()) {
-			return isClashing(left, right.left) || isClashing(left, right.right);
+			return this.isClashing(left, right.left) || 
+				   this.isClashing(left, right.right);
 			
 		} else if (right.isLeaf()) {
-			return isClashing(left.left, right) || isClashing(left.right, right);
+			return this.isClashing(left.left, right) || 
+				   this.isClashing(left.right, right);
 			
 		} else {
 			// only split the larger volume to avoid future repeated checks
-			// TODO prove that this works
+			// this still works as it is depth first into the largest volumes
 			if (left.boundingVolume.volume() > right.boundingVolume.volume()) {
-				return isClashing(left.left, right) || isClashing(left.right, right);
+				return this.isClashing(left.left, right) || 
+					   this.isClashing(left.right, right);
 			} else {
-				return isClashing(left, right.left) || isClashing(left, right.right);
+				return this.isClashing(left, right.left) || 
+					   this.isClashing(left, right.right);
 			}		   
 		}
 	}

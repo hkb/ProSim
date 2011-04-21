@@ -17,9 +17,9 @@ public class SubchainExtractor {
 		
 		ChainTreeScene scene = new ChainTreeScene();
 		
-		AdjustableChainTree t1 = cTree.getSubchain(0,8);
-		AdjustableChainTree t2 = cTree.getSubchain(9, 17);
-		AdjustableChainTree t12 = cTree.getSubchain(0, 17);
+		AdjustableChainTree t1 = cTree.getSubchain(0,7);
+		AdjustableChainTree t2 = cTree.getSubchain(9, 16);
+		AdjustableChainTree t12 = cTree.getSubchain(0, 16);
 
 		t1.move(new Point3d(0,0,-3));
 		

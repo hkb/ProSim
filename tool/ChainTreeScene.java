@@ -164,7 +164,7 @@ public class ChainTreeScene {
 			guiNodes[i].update(current, next);
 		}
 		
-		if (System.currentTimeMillis() - this.lastRepaintTime > 200) { // max 5 repaints per second
+		if (System.currentTimeMillis() - this.lastRepaintTime > 500) { // max 1 repaints per second
 			this.lastRepaintTime = System.currentTimeMillis();
 			this.scene.repaint();
 		}
