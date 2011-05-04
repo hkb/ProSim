@@ -7,9 +7,10 @@ import java.util.List;
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple2i;
 
+import math.Tuple2;
+
 import tool.BackboneSegmentAnalyser;
 import tool.ChainTreeScene;
-import tool.Tuple2;
 import dataStructure.AdjustableChainTree;
 import dataStructure.CTLeaf;
 import dataStructure.ChainTree;
@@ -32,15 +33,15 @@ public class MonteCarloLoopClosure {
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		
 		Tuple2<Integer, Integer> segment = BackboneSegmentAnalyser.extractIntermediateSegments(cTree).get(segmentNo);
-		int start = segment.e1;
-		int end = segment.e2;
+		int start = segment.x;
+		int end = segment.y;
 
 		// create subtrees
 		AdjustableChainTree t0 = cTree.getSubchain(0, start);
 		AdjustableChainTree t1 = cTree.getSubchain(0, end-1);
 		AdjustableChainTree t2 = cTree.getSubchain(end+1, cTree.length()-1);
 		
-		ChainTree[] cTrees = {t0, t2}; 
+		ChainTree[] cTrees = {t1, t2}; 
 		ChainTreeScene scene = new ChainTreeScene(cTrees);
 		
 		// define energy function for the last atom
@@ -62,7 +63,7 @@ public class MonteCarloLoopClosure {
 			} while(t1.isClashing() || t1.areClashing(t2));
 		}
 		
-		//scene.repaint(t1);
+		scene.repaint(t1);
 		
 		// make ready simulation
 		double energy = energyFunction.compute();
@@ -106,7 +107,7 @@ public class MonteCarloLoopClosure {
 						startTime = System.currentTimeMillis();
 					}
 					
-					//scene.repaint(t1);
+					scene.repaint(t1);
 					continue;
 				}
 				

@@ -4,12 +4,14 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import math.Point3D;
+
 import dataStructure.ChainTree;
 
 public class EndAtomDistance implements EnergyFunction {
 	
 	private ChainTree testing, target;	// the chain trees to compute the energy
-	public Point3d targetPoint;
+	public Point3D targetPoint;
 	
 	/**
 	 * 

@@ -9,9 +9,11 @@ import edu.geom3D.Capsule;
 import edu.math.Vector;
 import geom3d.Capsule3d;
 
-import javax.vecmath.Point3d;
 
+import math.Point3D;
 import math.matrix.TransformationMatrix;
+
+
 
 public class LinesegmentSweptSphere implements BoundingVolume {
 
@@ -23,7 +25,7 @@ public class LinesegmentSweptSphere implements BoundingVolume {
 	 * @param line The line of the volume.
 	 * @param radius The radius around the line.
 	 */
-	public LinesegmentSweptSphere(Point3d line, double radius) {
+	public LinesegmentSweptSphere(Point3D line, double radius) {
 		this(new Capsule(new Vector(0,0,0), new Vector(line.x, line.y, line.z), radius));
 	}
 
@@ -32,10 +34,10 @@ public class LinesegmentSweptSphere implements BoundingVolume {
 	 * 
 	 * @param points The points to be encapsulated.
 	 */
-	public LinesegmentSweptSphere(Collection<Point3d> points) {
+	public LinesegmentSweptSphere(Collection<Point3D> points) {
 		List<Vector> vectors = new ArrayList<Vector>();
 
-		for (Point3d point : points) {
+		for (Point3D point : points) {
 			vectors.add(new Vector(point.x, point.y, point.z));
 		}
 

@@ -7,6 +7,7 @@ import javax.vecmath.Point3d;
 
 import tool.ChainTreeScene;
 import dataStructure.AdjustableChainTree;
+import dataStructure.ChainTree;
 import energyFunction.AtomDistance;	
 import energyFunction.DihedralAngles;
 import energyFunction.EnergyFunction;
@@ -24,8 +25,8 @@ public class MonteCarloSimulation {
 		/*
 		 * Setup.
 		 */
-		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
-		AdjustableChainTree target = new AdjustableChainTree(pdbId);
+		ChainTree cTree = new AdjustableChainTree(pdbId);
+		ChainTree target = new ChainTree(pdbId);
 		
 		EnergyFunction energyFunction = new AtomDistance(cTree, target);
 		List<Integer> rotateableBonds = cTree.rotatableBonds();
@@ -36,7 +37,7 @@ public class MonteCarloSimulation {
 
 		// setup scene
 		ChainTreeScene scene = new ChainTreeScene(cTree);
-		//scene.add(target, 5);
+		scene.add(target, 10);
 		
 		// ready, set
 		double energy = energyFunction.compute();

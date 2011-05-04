@@ -11,9 +11,11 @@ import java.util.StringTokenizer;
 
 import javax.vecmath.Point3d;
 
+import math.Point3D;
+
 public class PDBParser {
 	
-	public List<Point3d> backbone = new ArrayList<Point3d>();
+	public List<Point3D> backbone = new ArrayList<Point3D>();
 	public Set<Integer> alphaHelix = new HashSet<Integer>();
 	public Set<Integer> betaSheet = new HashSet<Integer>();
 	public Set<Integer> heteroAtoms = new HashSet<Integer>();
@@ -70,7 +72,7 @@ public class PDBParser {
 			double y = Double.parseDouble(columns(record, 39, 46));
 			double z = Double.parseDouble(columns(record, 47, 54));
 
-			this.backbone.add(new Point3d(x, y, z));
+			this.backbone.add(new Point3D(x, y, z));
 			this.atomCount++;
 		}
 	}

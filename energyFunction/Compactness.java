@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import math.Point3D;
+
 import dataStructure.ChainTree;
 
 public class Compactness implements EnergyFunction {
@@ -17,7 +19,7 @@ public class Compactness implements EnergyFunction {
 
 	@Override
 	public double compute() {
-		List<Point3d> points = this.cTree.getBackboneAtomPositions();
+		List<Point3D> points = this.cTree.getBackboneAtomPositions();
 		
 		return 0;
 	}

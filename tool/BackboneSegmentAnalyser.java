@@ -6,6 +6,8 @@ import java.util.List;
 import javax.vecmath.Point2i;
 import javax.vecmath.Tuple2i;
 
+import math.Tuple2;
+
 import dataStructure.ChainTree;
 
 public class BackboneSegmentAnalyser {

@@ -4,12 +4,14 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import math.Point3D;
+
 import dataStructure.ChainTree;
 
 public class AtomDistance implements EnergyFunction {
 	
 	private ChainTree testing, target;	// the chain trees to compute the energy
-	List<Point3d> targetPoints;
+	List<Point3D> targetPoints;
 	
 	/**
 	 * 
@@ -28,7 +30,7 @@ public class AtomDistance implements EnergyFunction {
 	public double compute() {
 		double sum = 0;
 		
-		List<Point3d> testingPoints = this.testing.getBackboneAtomPositions();
+		List<Point3D> testingPoints = this.testing.getBackboneAtomPositions();
 		
 		for (int i = 0, j = testingPoints.size(); i < j; i++) {	
 			double diff = Math.abs(testingPoints.get(i).distance(this.targetPoints.get(i)));

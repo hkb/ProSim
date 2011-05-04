@@ -1,10 +1,11 @@
 package dataStructure;
 
-import javax.vecmath.Point3d;
+import math.Point3D;
+import math.matrix.TransformationMatrix;
+
 
 import boundingVolume.LinesegmentSweptSphere;
 
-import math.matrix.TransformationMatrix;
 
 public class CTLeaf extends CTNode {
 	
@@ -19,7 +20,7 @@ public class CTLeaf extends CTNode {
 	 * @param relativePosition The position of this node relative to the previous node.
 	 * @param i The index of the bond in the backbone.
 	 */
-	public CTLeaf(Point3d relativePosition, int i) {
+	public CTLeaf(Point3D relativePosition, int i) {
 		// the span of this sub chain (just this bond)
 		super.low = super.high = i;
 		

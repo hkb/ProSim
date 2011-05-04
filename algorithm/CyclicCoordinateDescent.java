@@ -3,8 +3,12 @@ package algorithm;
 import java.util.List;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
 
-import tool.Tuple2;
+import math.Point3D;
+import math.Tuple2;
+import math.Vector3D;
+
 import dataStructure.ChainTree;
 import edu.math.Line;
 import edu.math.Vector;
@@ -18,11 +22,12 @@ import edu.math.Vector;
  */
 public class CyclicCoordinateDescent {
 	
-	public static double TARGET_RMS_DISTANCE = 0.08; 
-	public static int MAX_ITERATIONS = 5000;
+	public static double TARGET_RMS_DISTANCE = 0.08;
+	public static int TARGET_LENGTH = 3;
+	public static int MAX_ITERATIONS = 20;
 	
 	private ChainTree loop;						// the loop to close including the target anchor
-	private Vector[] target;					// the position of the target
+	private Vector3D[] target;					// the position of the target
 
 	
 	/**
@@ -34,14 +39,14 @@ public class CyclicCoordinateDescent {
 	 */
 	public CyclicCoordinateDescent(ChainTree loop, ChainTree target) {
 		// fetch target position
-		if (target.length() != 3)
+		if (target.length() != TARGET_LENGTH)
 			throw new IllegalArgumentException("Target must be a single residue!");
 		
-		this.target = new Vector[3];
+		this.target = new Vector3D[3];
 		
 		int i = 0;
-		for (Point3d position : target.getBackboneAtomPositions()) {
-			this.target[i] = pointToVector(position);
+		for (Point3D position : target.getBackboneAtomPositions()) {
+			this.target[i] = position;
 			
 			i++;
 		}
@@ -58,39 +63,49 @@ public class CyclicCoordinateDescent {
 	 */
 	public double getRotationAngle(int bond) {
 		// determine the rotation axis of the bond
-		List<Point3d> bondAtoms = this.loop.getBackboneAtomPositions(bond, bond);
-		Line rotationAxis = new Line(pointToVector(bondAtoms.get(0)), pointToVector(bondAtoms.get(1)));
+		List<Point3D> bondAtoms = this.loop.getBackboneAtomPositions(bond, bond);
+		Vector3D rotationAxis = bondAtoms.get(1).subtract(bondAtoms.get(0));
 		
 		// fetch the positions of the moving terminal residue
-		List<Point3d> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-2, this.loop.length()-1);
-		Vector[] moving = new Vector[3];
+		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-2, this.loop.length()-1);
+		Vector3D[] moving = new Vector3D[TARGET_LENGTH];
 		
-		for (int i = 0; i < 3; i++) {
-			moving[i] = pointToVector(movingTerminalAtoms.get(i));
+		for (int i = 0; i < TARGET_LENGTH; i++) {
+			moving[i] = movingTerminalAtoms.get(i);
 		}
 		
 		// compute the vectors r, t, n
-		Vector[] r = new Vector[3];
-		Vector[] t = new Vector[3];
-		Vector[] n = new Vector[3];
+		Vector3D[] r = new Vector3D[TARGET_LENGTH];
+		Vector3D[] f = new Vector3D[TARGET_LENGTH];
+		Vector3D[] s = new Vector3D[TARGET_LENGTH];
 		
-		for (int i = 0; i < 3; i++) {
-			Vector M = moving[i];
-			Vector T = this.target[i];
-			Vector O = rotationAxis.
+		for (int i = 0; i < TARGET_LENGTH; i++) {
+			Vector3D M = moving[i];
+			Vector3D T = this.target[i];
+			Vector3D O = M.norm().scale(rotationAxis.dot(M.norm()));
+			
+			r[i] = M.subtract(O);
+			f[i] = T.subtract(O);
+			s[i] = O.norm().cross(r[i].norm());
 		}
 		
 		/*
 		 * Compute alpha.
 		 */
-		int alpha = 0;
+		double numerator = 0;
+		double denominator = 0;
+		
+		for (int i = 0; i < TARGET_LENGTH; i++) {
+			numerator += f[i].dot(s[i].norm()) * r[i].length();
+			denominator += f[i].dot(r[i].norm()) * r[i].length();
+		}
 		
 		/*
 		 * Compute second derivative.
 		 */
 		//Math.atan2(arg0, arg1)
 		
-		return alpha;
+		return Math.atan(numerator / denominator);
 	}
 	
 	/**
@@ -106,7 +121,7 @@ public class CyclicCoordinateDescent {
 	 * @param point
 	 * @return
 	 */
-	private static Vector pointToVector(Point3d point) {
-		return new Vector(point.x, point.y, point.z);
+	private static Vector3D pointToVector(Point3d point) {
+		return new Vector3D(point.x, point.y, point.z);
 	}
 }

@@ -6,7 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import javax.vecmath.Point3d;
+import math.Point3D;
+import math.Vector3D;
+import math.matrix.TransformationMatrix;
 
 import boundingVolume.BoundingVolume;
 
@@ -14,14 +16,13 @@ import edu.math.Vector;
 
 import tool.PDBParser;
 
-import math.matrix.TransformationMatrix;
 
 public class ChainTree {
 	
 	public CTNode root;											// the root node of the tree
 	public CTLeaf[] backboneBonds;								// the leaf nodes of the tree (the bonds of the protein backbone)
 	
-	private Point3d position;									// the position of the left most node in the world
+	private Point3D position;									// the position of the left most node in the world
 	private double angle;										// the rotating angle of this backbone
 	private TransformationMatrix worldTransformation;			// the transformation to transform from the proteins local coordinates to the world 
 	
@@ -89,10 +90,10 @@ public class ChainTree {
 	 * 
 	 * @param points The points of the protein backbone atoms.
 	 */
-	public ChainTree(List<Point3d> points) {
+	public ChainTree(List<Point3D> points) {
 		// store the absolute position of the chain
-		Point3d first = points.get(0);
-		this.position = new Point3d(first.x, first.y, first.z);
+		Point3D first = points.get(0);
+		this.position = new Point3D(first.x, first.y, first.z);
 		
 		this.worldTransformation = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
 				
@@ -101,8 +102,8 @@ public class ChainTree {
 		 */
 		this.backboneBonds = new CTLeaf[points.size()-1];
 		
-		Point3d start = this.position;	// the start of the current bond
-		Point3d end;					// the end of the current bond
+		Point3D start = this.position;	// the start of the current bond
+		Point3D end;					// the end of the current bond
 		
 		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
 			end = points.get(i+1);
@@ -113,7 +114,7 @@ public class ChainTree {
 			}
 			
 			// create new leaf from its relative position to the next leaf
-			this.backboneBonds[i] = new CTLeaf(new Point3d(end.x-start.x, end.y-start.y, end.z-start.z), i);
+			this.backboneBonds[i] = new CTLeaf(new Point3D(end.x-start.x, end.y-start.y, end.z-start.z), i);
 			
 			start = end;
 		}
@@ -181,7 +182,7 @@ public class ChainTree {
 	 * 
 	 * @return The points of the atoms.
 	 */
-	public List<Point3d> getBackboneAtomPositions() {
+	public List<Point3D> getBackboneAtomPositions() {
 		return this.getBackboneAtomPositions(0, this.length()-1);
 	}
 
@@ -192,7 +193,7 @@ public class ChainTree {
 	 * @param j The last bond of the segment.
 	 * @return The points of the atoms in the segment.
 	 */
-	public List<Point3d> getBackboneAtomPositions(int i, int j) {
+	public List<Point3D> getBackboneAtomPositions(int i, int j) {
 		TransformationMatrix transformationMatrix = new TransformationMatrix(this.worldTransformation);
 		
 		// if we aren't starting from the first bond then modify the transformation  
@@ -201,18 +202,18 @@ public class ChainTree {
 		}
 		
 		
-		List<Point3d> points = new ArrayList<Point3d>();
+		List<Point3D> points = new ArrayList<Point3D>();
 		
 		// place all atoms related to bonds
 		for (; i <= j; i++) {
-			points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
+			points.add(new Point3D(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
 			
 			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
 		}
 		
 		// place an extra atom after the last bond
-		points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
-
+		points.add(new Point3D(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
+		
 		return points;
 	}
 
@@ -276,7 +277,7 @@ public class ChainTree {
 	 * @return The dihedral angles.
 	 */
 	public List<Double> getDihedralAngles() {
-		List<Point3d> points = this.getBackboneAtomPositions();
+		List<Point3D> points = this.getBackboneAtomPositions();
 		
 		List<Double> dihedralAngles = new ArrayList<Double>();
 		
@@ -284,9 +285,9 @@ public class ChainTree {
 		dihedralAngles.add(0.0);
 		
 		// init computation
-		Point3d q = points.get(0);
-		Point3d r = points.get(1);
-		Point3d s = points.get(2);
+		Point3D q = points.get(0);
+		Point3D r = points.get(1);
+		Point3D s = points.get(2);
 		
 		Vector qr = new Vector(q.x-r.x, q.y-r.y, q.z-r.z);
 		Vector rs = new Vector(r.x-s.x, r.y-s.y, r.z-s.z);
@@ -620,7 +621,7 @@ public class ChainTree {
 	 * 
 	 * @param move The vector that defines the movement.
 	 */
-	public void move(Point3d move) {
+	public void move(Vector3D move) {
 		this.position.add(move);
 		
 		this.worldTransformation = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
@@ -673,8 +674,8 @@ public class ChainTree {
 	 * @param cTrees The trees to calculate the positions from.
 	 * @return A list of the combined backbone atom positions.
 	 */
-	private static List<Point3d> getChainTreesCombinedBackboneAtomPositions(ChainTree[] cTrees) {
-		List<Point3d> points = new LinkedList<Point3d>();
+	private static List<Point3D> getChainTreesCombinedBackboneAtomPositions(ChainTree[] cTrees) {
+		List<Point3D> points = new LinkedList<Point3D>();
 		
 		for (ChainTree cTree : cTrees) {
 			points.addAll(cTree.getBackboneAtomPositions());

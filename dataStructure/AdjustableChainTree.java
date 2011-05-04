@@ -7,9 +7,12 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import math.Point3D;
+import math.matrix.TransformationMatrix;
+
+
 import boundingVolume.LinesegmentSweptSphere;
 
-import math.matrix.TransformationMatrix;
 
 public class AdjustableChainTree extends ChainTree {
 	
@@ -27,7 +30,7 @@ public class AdjustableChainTree extends ChainTree {
 		this.lockAndGroupPeptidePlanes();
 		this.lockAndGroupAlphaHelices();
 		this.lockAndGroupBetaSheets();
-		//this.rebalance();
+		this.rebalance();
 	}
 
 	/**
@@ -50,7 +53,7 @@ public class AdjustableChainTree extends ChainTree {
 	 * 
 	 * @param points The points of the protein backbone atoms.
 	 */
-	public AdjustableChainTree(List<Point3d> points) {
+	public AdjustableChainTree(List<Point3D> points) {
 		super(points);
 
 		// optimise the tree
@@ -256,16 +259,16 @@ public class AdjustableChainTree extends ChainTree {
 		if (node.isLeaf())
 			return;
 		
-		List<Point3d> points = new LinkedList<Point3d>();
+		List<Point3D> points = new LinkedList<Point3D>();
 
 		// compute all points in the sub chain in the coordinate system of node.low
 		TransformationMatrix transformationMatrix = new TransformationMatrix();
 
 		for (int i = node.low; i <= node.high; i++) {
-			points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
+			points.add(new Point3D(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
 			transformationMatrix.multR(this.backboneBonds[i].transformationMatrix);
 		}
-		points.add(new Point3d(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
+		points.add(new Point3D(transformationMatrix.a14, transformationMatrix.a24, transformationMatrix.a34));
 		
 		// update
 		node.boundingVolume = new LinesegmentSweptSphere(points);

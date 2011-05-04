@@ -10,6 +10,8 @@ import java.util.Map;
 
 import javax.vecmath.Point3d;
 
+import math.Point3D;
+
 import dataStructure.CTLeaf;
 import dataStructure.ChainTree;
 import edu.geom3D.Cylinder;
@@ -103,13 +105,13 @@ public class ChainTreeScene {
 	public void add(ChainTree cTree, int visibility) {
 		
 		if(!this.cTrees.containsKey(cTree)) {
-			List<Point3d> points = cTree.getBackboneAtomPositions();
+			List<Point3D> points = cTree.getBackboneAtomPositions();
 			
 			GUINode[] guiNodes = new GUINode[points.size()];
 			
 			for (int i = 0, j = points.size(); i < j; i++) {
-				Point3d current = points.get(i);
-				Point3d next = (i+1 < j) ? points.get(i+1) : null;
+				Point3D current = points.get(i);
+				Point3D next = (i+1 < j) ? points.get(i+1) : null;
 				
 				GUINode node = new GUINode(current, next);
 				guiNodes[i] = node;
@@ -128,7 +130,8 @@ public class ChainTreeScene {
 				}
 				
 				// draw shapes
-				this.scene.addShape(node.sphere, modifyTransparency(new Color(color.getRed(), color.getGreen(), color.getBlue(), 100), visibility));
+				//this.scene.addShape(node.sphere, modifyTransparency(new Color(color.getRed(), color.getGreen(), color.getBlue(), 100), visibility));
+				this.scene.addShape(node.sphere, modifyTransparency(color, visibility));
 				
 				if (next != null)
 					this.scene.addShape(node.cylinder, modifyTransparency(color, visibility));
@@ -154,17 +157,17 @@ public class ChainTreeScene {
 	 * @param cTree The tree to repaint.
 	 */
 	public void repaint(ChainTree cTree) {
-		List<Point3d> points = cTree.getBackboneAtomPositions();
+		List<Point3D> points = cTree.getBackboneAtomPositions();
 		GUINode[] guiNodes = this.cTrees.get(cTree);
 
 		for (int i = 0, j = points.size(); i < j; i++) {
-			Point3d current = points.get(i);
-			Point3d next =(i+1 < j) ? points.get(i+1) : null;
+			Point3D current = points.get(i);
+			Point3D next =(i+1 < j) ? points.get(i+1) : null;
 			
 			guiNodes[i].update(current, next);
 		}
 		
-		if (System.currentTimeMillis() - this.lastRepaintTime > 500) { // max 1 repaints per second
+		if (System.currentTimeMillis() - this.lastRepaintTime > 0) { // max 1 repaints per second
 			this.lastRepaintTime = System.currentTimeMillis();
 			this.scene.repaint();
 		}
@@ -207,14 +210,14 @@ public class ChainTreeScene {
 	}
 */
 	private class GUINode {
-		public Sphere3d sphere = new Sphere3d(new geom3d.Point3d(0,0,0), CTLeaf.atomRadius/2);
-		public Cylinder3d cylinder = new Cylinder3d(new geom3d.Point3d(0,0,0), new geom3d.Point3d(0,0,0), 0.4f);
+		public Sphere3d sphere = new Sphere3d(new geom3d.Point3d(0,0,0), 0.3f);
+		public Cylinder3d cylinder = new Cylinder3d(new geom3d.Point3d(0,0,0), new geom3d.Point3d(0,0,0), 0.2f);
 		
-		public GUINode(Point3d current, Point3d next) {
+		public GUINode(Point3D current, Point3D next) {
 			this.update(current, next);
 		}
 		
-		public void update(Point3d current, Point3d next) {
+		public void update(Point3D current, Point3D next) {
 			this.sphere.center = new geom3d.Point3d(current.x, current.y, current.z);
 			
 			if (next != null) {
@@ -223,7 +226,7 @@ public class ChainTreeScene {
 			}
 		}
 		
-		private Vector pointToVector(Point3d point) {
+		private Vector pointToVector(Point3D point) {
 			return new Vector(point.x, point.y, point.z);
 		}
 	}
