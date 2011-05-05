@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import math.Vector3D;
+
 
 import tool.ChainTreeScene;
 import dataStructure.AdjustableChainTree;
@@ -21,12 +23,12 @@ public class SubchainExtractor {
 		AdjustableChainTree t2 = cTree.getSubchain(9, 16);
 		AdjustableChainTree t12 = cTree.getSubchain(0, 16);
 
-		t1.move(new Point3d(0,0,-3));
+		t1.move(new Vector3D(0.0,0.0,-3.0));
 		
 		scene.add(t1);
 		scene.add(t2);
 		
-		t12.move(new Point3d(3,3,3));
+		t12.move(new Vector3D(3.0,3.0,3.0));
 		scene.add(t12);
 		
 		scene.scene.centerCamera();

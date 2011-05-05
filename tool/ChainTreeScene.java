@@ -28,6 +28,8 @@ import geom3d.Sphere3d;
  */
 public class ChainTreeScene {
 	
+	public static int MAX_REPAINTS_PER_SECOND = -1;
+	
 	public J3DScene scene = J3DScene.createJ3DSceneInFrame();
 	private Map<ChainTree,GUINode[]> cTrees;
 	private long lastRepaintTime;
@@ -173,17 +175,18 @@ public class ChainTreeScene {
 	 * @param cTree The tree to repaint.
 	 */
 	public void repaint(ChainTree cTree) {
-		List<Point3D> points = cTree.getBackboneAtomPositions();
-		GUINode[] guiNodes = this.cTrees.get(cTree);
-
-		for (int i = 0, j = points.size(); i < j; i++) {
-			Point3D current = points.get(i);
-			Point3D next =(i+1 < j) ? points.get(i+1) : null;
+		if (MAX_REPAINTS_PER_SECOND == -1 || System.currentTimeMillis() - this.lastRepaintTime > 1000 / MAX_REPAINTS_PER_SECOND) {
 			
-			guiNodes[i].update(current, next);
-		}
-		
-		if (System.currentTimeMillis() - this.lastRepaintTime > 0) { // max 1 repaints per second
+			List<Point3D> points = cTree.getBackboneAtomPositions();
+			GUINode[] guiNodes = this.cTrees.get(cTree);
+	
+			for (int i = 0, j = points.size(); i < j; i++) {
+				Point3D current = points.get(i);
+				Point3D next =(i+1 < j) ? points.get(i+1) : null;
+				
+				guiNodes[i].update(current, next);
+			}
+	
 			this.lastRepaintTime = System.currentTimeMillis();
 			this.scene.repaint();
 		}

@@ -214,7 +214,8 @@ public class AdjustableChainTree extends ChainTree {
 	private void toggleLockedSubtreeVisibility(boolean visible) {
 		for (CTNode node : this.lockedSubtrees) {
 			// toggle this trees hight
-			node.height = (visible) ? Math.max(node.left.height, node.right.height) + 1: 0; 
+			// TODO why can leafs be in lockedSubtrees??		
+			node.height = (visible && !node.isLeaf()) ? Math.max(node.left.height, node.right.height) + 1: 0; 
 			
 			// update ancestors
 			node = node.parent;

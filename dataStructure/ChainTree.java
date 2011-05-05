@@ -605,8 +605,10 @@ public class ChainTree {
 	 * Unfolds the protein into some, non clashing, confirmation.
 	 */
 	public void unfold() {
+		List<Double> dihedralAngles = this.getDihedralAngles();
+		
 		for (int i : this.rotatableBonds()) {
-			double angle = Math.PI * Math.random();
+			double angle = dihedralAngles.get((int) (Math.random() * dihedralAngles.size()));
 			
 			do {
 				this.changeRotationAngle(i, angle);
