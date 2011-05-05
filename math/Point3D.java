@@ -5,7 +5,7 @@ package math;
  * 
  * @author hkb
  */
-public class Point3D extends Vector3D {
+public class Point3D extends Tuple3<Double,Double,Double> {
 
 	/**
 	 * Creates a new point.
@@ -33,7 +33,16 @@ public class Point3D extends Vector3D {
 	 * @param other The point to find the distance to.
 	 * @return The distance between the points.
 	 */
-	public double distance(Point3D other) {
-		return Math.abs(other.subtract(this).length());
+	public double distance(Point3D other) {		
+		return Math.abs(other.asVector().subtract(this.asVector()).length());
+	}
+	
+	/**
+	 * This point as a vector.
+	 * 
+	 * @return This point vector.
+	 */
+	public Vector3D asVector() {
+		return new Vector3D(this);
 	}
 }

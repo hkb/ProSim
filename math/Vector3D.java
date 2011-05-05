@@ -6,6 +6,13 @@ package math;
  * @author hkb
  */
 public class Vector3D extends Tuple3<Double,Double,Double> {
+	
+	/**
+	 * 
+	 */
+	public Vector3D() {
+		super(0.0, 0.0, 0.0);
+	}
 
 	/**
 	 * Creates a new 3-dimensional vector.
@@ -97,6 +104,16 @@ public class Vector3D extends Tuple3<Double,Double,Double> {
 		return new Vector3D(this.y * other.z - this.z * other.y,
 						    this.z * other.x - this.x * other.z,
 						    this.x * other.y - this.y * other.x);
+	}
+	
+	/**
+	 * Computes a vector from this point to the other.
+	 * 
+	 * @param other The vector to compute a vector to.
+	 * @return The vector from this vector to the other.
+	 */
+	public Vector3D vectorTo(Vector3D other) {
+		return other.subtract(this);
 	}
 	
 	/**

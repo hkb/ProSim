@@ -99,19 +99,6 @@ public class AdjustableChainTree extends ChainTree {
 		super.changeRotationAngle(i, angle);
 	}
 	
-	@Override
-	public void unfold() {
-		List<Double> dihedralAngles = this.getDihedralAngles();
-		
-		for (int i : this.rotatableBonds()) {
-			int d = 180;
-			do {
-				this.changeRotationAngle(i, d-dihedralAngles.get(i));
-				d--;
-			} while(this.isClashing());
-		}
-	}
-	
 	/**
 	 * Locks and groups peptide planes.
 	 */

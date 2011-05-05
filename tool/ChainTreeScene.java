@@ -11,6 +11,7 @@ import java.util.Map;
 import javax.vecmath.Point3d;
 
 import math.Point3D;
+import math.Vector3D;
 
 import dataStructure.CTLeaf;
 import dataStructure.ChainTree;
@@ -143,6 +144,21 @@ public class ChainTreeScene {
 	}
 	
 	/**
+	 * 
+	 * @param start
+	 * @param end
+	 * @param radius
+	 * @param color
+	 */
+	public void addCylinder(Vector3D start, Vector3D end, float radius, Color color) {
+		this.scene.addShape(new Cylinder3d(vector3DToPoint3d(start), vector3DToPoint3d(end), radius), color);
+	}
+	
+	public void addSphere(Vector3D center, float radius, Color color) {
+		this.scene.addShape(new Sphere3d(vector3DToPoint3d(center), radius), color);
+	}
+	
+	/**
 	 * Repaints the entire scene.
 	 */
 	public void repaint() {
@@ -153,7 +169,7 @@ public class ChainTreeScene {
 	
 	/**
 	 * Repaints only the specified tree.
-	 * 
+	 * scene.scene.addShape(new);
 	 * @param cTree The tree to repaint.
 	 */
 	public void repaint(ChainTree cTree) {
@@ -183,6 +199,14 @@ public class ChainTreeScene {
 		int alpha = (int) Math.round(color.getAlpha() / 100.0 * visibility);
 		
 		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+	}
+	
+	/**
+	 * @return 
+	 * 
+	 */
+	private static geom3d.Point3d vector3DToPoint3d(Vector3D vector) {
+		return new geom3d.Point3d(vector.x, vector.y, vector.z);
 	}
 	
 	/**

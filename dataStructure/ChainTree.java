@@ -605,13 +605,12 @@ public class ChainTree {
 	 * Unfolds the protein into some, non clashing, confirmation.
 	 */
 	public void unfold() {
-		List<Double> dihedralAngles = this.getDihedralAngles();
-		
-		for (int i = 0, j = this.backboneBonds.length; i < j; i++) {
-			int d = 180;
+		for (int i : this.rotatableBonds()) {
+			double angle = Math.PI * Math.random();
+			
 			do {
-				this.changeRotationAngle(i, d-dihedralAngles.get(i));
-				d--;
+				this.changeRotationAngle(i, angle);
+				angle -= Math.PI / 360;
 			} while(this.isClashing());
 		}
 	}
@@ -622,7 +621,7 @@ public class ChainTree {
 	 * @param move The vector that defines the movement.
 	 */
 	public void move(Vector3D move) {
-		this.position.add(move);
+		this.position = new Point3D(new Vector3D(this.position).add(move));
 		
 		this.worldTransformation = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
 		this.worldTransformation.rotate(this.angle);
