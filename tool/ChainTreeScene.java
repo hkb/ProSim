@@ -35,9 +35,9 @@ public class ChainTreeScene {
 	/*
 	 * Colours of the different part of the protein backbone.
 	 */
-	public Color[] colorBackbone = {new Color(0, 180, 180),
-							     	new Color(0, 50, 80),
-							     	new Color(180, 180, 180)};
+	public Color[] colorBackbone = {new Color(150,230,255),
+									new Color(150,230,255),
+							     	new Color(150,200,255)};
 
 	public Color colorAlphaHelix = new Color(255, 255, 0);
 	public Color colorBetaSheet = new Color(0, 255, 0);

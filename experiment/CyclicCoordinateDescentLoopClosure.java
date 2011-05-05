@@ -19,13 +19,14 @@ public class CyclicCoordinateDescentLoopClosure {
 		 * Configuration.
 		 */
 		String pdbId = "1SIS"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T
-		int segmentNo = 2;
+		int segmentNo = 1;
 		
 
 		/*
 		 * Setup.
 		 */
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
+		cTree.rotate(3);
 		
 		Tuple2<Integer, Integer> segment = BackboneSegmentAnalyser.extractIntermediateSegments(cTree).get(segmentNo);
 		int start = segment.x;
@@ -52,7 +53,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		ChainTree target = cTree.getSubchain(end+1, end+2);		
 		ChainTree testLoop = cTree.getSubchain(start-1, end+2);
 		testLoop.unfold();
-		scene.add(testLoop, 50);
+		scene.add(testLoop, 100);
 		
 		CyclicCoordinateDescent anglePredictor = new CyclicCoordinateDescent(testLoop, target);
 
@@ -63,19 +64,19 @@ public class CyclicCoordinateDescentLoopClosure {
 		
 		while (true) {			
 			for (int bond : rotateableBonds) {
-				//Thread.sleep(50);
 				double angle = anglePredictor.getRotationAngle(bond-start+1);
 				
 				testLoop.changeRotationAngle(bond-start+1, angle);
-				//t1.changeRotationAngle(bond, angle);
 			
 				scene.repaint(testLoop);
 
 				if (anglePredictor.isLoopClosed()) { 
 					System.out.println("Loop closed in " + itt + " iterations!");
 					itt = 0;
-					Thread.sleep(1000);
+					Thread.sleep(500);
 					testLoop.unfold();
+					scene.repaint(testLoop);
+					Thread.sleep(500);
 				}	
 			}
 			
