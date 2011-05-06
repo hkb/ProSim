@@ -71,23 +71,23 @@ public class EndlessCCDLoopCloser {
 				testLoop.changeRotationAngle(bond-start+1, angle);
 			
 				scene.repaint(testLoop);
-
-				if (anglePredictor.targetRMSDistance() < targetRMSDistance) { 
-					System.out.println("Loop closed in " + itt + " iterations!");
-					itt = 0;
-					Thread.sleep(500);
-					testLoop.unfold();
-					scene.repaint(testLoop);
-					Thread.sleep(500);
-				}	
 			}
 			
-			itt++;
-			
-			if (itt >= maxIterations) {
+			if (anglePredictor.targetRMSDistance() < targetRMSDistance) { 
+				System.out.println("Loop closed in " + itt + " iterations!");
 				itt = 0;
-				System.err.println("TO MANY ITERATIONS!");
+				Thread.sleep(500);
 				testLoop.unfold();
+				scene.repaint(testLoop);
+				Thread.sleep(500);
+			} else {
+				itt++;
+			
+				if (itt >= maxIterations) {
+					itt = 0;
+					System.err.println("TO MANY ITERATIONS!");
+					testLoop.unfold();
+				}
 			}
 		}
 	}

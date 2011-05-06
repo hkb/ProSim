@@ -27,7 +27,7 @@ import geom3d.Line3d;
  */
 public class CyclicCoordinateDescent {
 	
-	public static int TARGET_LENGTH = 3;
+	public static int TARGET_LENGTH;
 	public static int MAX_ITERATIONS = 20;
 	
 	private ChainTree loop;						// the loop to close including the target anchor
@@ -42,11 +42,9 @@ public class CyclicCoordinateDescent {
 	 * @param target The target residue.
 	 */
 	public CyclicCoordinateDescent(ChainTree loop, ChainTree target) {
-		// fetch target position
-		if (target.length() != TARGET_LENGTH-1)
-			throw new IllegalArgumentException("Target must be a single residue!");
+		TARGET_LENGTH = target.length()+1;
 		
-		this.target = new Vector3D[3];
+		this.target = new Vector3D[TARGET_LENGTH];
 		
 		int i = 0;
 		for (Point3D position : target.getBackboneAtomPositions()) {
@@ -140,7 +138,7 @@ public class CyclicCoordinateDescent {
 		Line3D rotationAxis = new Line3D(bondAtoms.get(0), bondAtoms.get(1));
 		
 		// fetch the positions of the moving terminal residue
-		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-2, this.loop.length()-1);
+		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-TARGET_LENGTH+1, this.loop.length()-1);
 
 		
 		// compute the values b, c
@@ -174,7 +172,7 @@ public class CyclicCoordinateDescent {
 	 */
 	public double targetRMSDistance() {
 		// fetch the positions of the moving terminal residue
-		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-2, this.loop.length()-1);
+		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-TARGET_LENGTH+1, this.loop.length()-1);
 		Point3D[] moving = new Point3D[TARGET_LENGTH];
 		
 		for (int i = 0; i < TARGET_LENGTH; i++) {

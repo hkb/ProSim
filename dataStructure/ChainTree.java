@@ -635,6 +635,7 @@ public class ChainTree {
 	 * Rotate the entire protein by the given angle.
 	 * 
 	 * @param The angle to rotate with.
+	 * @warning THIS METHOD ONLY ROTATES ABOUT THE AXIS FROM ORIGO TO THE FIRST ATOM!
 	 */
 	public void rotate(double angle) {
 		this.angle += angle;
