@@ -1,4 +1,4 @@
-package experiment;
+package test;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -13,13 +13,15 @@ import tool.ChainTreeScene;
 import dataStructure.AdjustableChainTree;
 import dataStructure.ChainTree;
 
-public class CyclicCoordinateDescentLoopClosure {
+public class EndlessCCDLoopCloser {
 	public static void main(String[] args) throws Exception {
 		/*
 		 * Configuration.
 		 */
 		String pdbId = "1SIS"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T, 1SIS, 1E2B
 		int segmentNo = 1;
+		double targetRMSDistance = 0.04;
+		int maxIterations = 10000;
 		
 
 		/*
@@ -65,11 +67,12 @@ public class CyclicCoordinateDescentLoopClosure {
 		while (true) {			
 			for (int bond : rotateableBonds) {
 				double angle = anglePredictor.getRotationAngle(bond-start+1);
+				
 				testLoop.changeRotationAngle(bond-start+1, angle);
 			
 				scene.repaint(testLoop);
 
-				if (anglePredictor.targetRMSDistance() < 0.08) { 
+				if (anglePredictor.targetRMSDistance() < targetRMSDistance) { 
 					System.out.println("Loop closed in " + itt + " iterations!");
 					itt = 0;
 					Thread.sleep(500);
@@ -81,7 +84,7 @@ public class CyclicCoordinateDescentLoopClosure {
 			
 			itt++;
 			
-			if (itt >= 5000) {
+			if (itt >= maxIterations) {
 				itt = 0;
 				System.err.println("TO MANY ITERATIONS!");
 				testLoop.unfold();

@@ -1,6 +1,7 @@
 package test;
 
 import java.awt.Color;
+import java.io.File;
 
 import javax.media.j3d.BadTransformException;
 
@@ -16,7 +17,11 @@ import edu.geom3D.Capsule;
 
 public class VisualChainTreeDebugger {
 	public static void main(String[] args) {
+		//File[] listOfFiles = new File("/home/hkb/workspace/ProSim/pdb_files").listFiles();
+		//String pdbId = listOfFiles[(int)(Math.random() * listOfFiles.length)].getName().substring(0,4);
+		//System.out.println(pdbId);
 		String pdbId = "1SIS";
+		
 		
 		//
 		ChainTree cTree = new AdjustableChainTree(pdbId);

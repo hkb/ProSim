@@ -27,7 +27,6 @@ import geom3d.Line3d;
  */
 public class CyclicCoordinateDescent {
 	
-	public static double TARGET_RMS_DISTANCE = 0.08;
 	public static int TARGET_LENGTH = 3;
 	public static int MAX_ITERATIONS = 20;
 	
@@ -66,7 +65,7 @@ public class CyclicCoordinateDescent {
 	 * 
 	 * @return The rotation angle that minimises the loop terminals distance to the target.
 	 */
-	public double getRotationAngle(int bond) {		
+	public double __getRotationAngle(int bond) {		
 		// determine the rotation axis of the bond
 		List<Point3D> bondAtoms = this.loop.getBackboneAtomPositions(bond, bond);
 		Line3D rotationAxis = new Line3D(bondAtoms.get(0), bondAtoms.get(1));
@@ -135,10 +134,45 @@ public class CyclicCoordinateDescent {
 		return alpha;			
 	}
 	
+	public double getRotationAngle(int bond) {
+		// determine the rotation axis of the bond
+		List<Point3D> bondAtoms = this.loop.getBackboneAtomPositions(bond, bond);
+		Line3D rotationAxis = new Line3D(bondAtoms.get(0), bondAtoms.get(1));
+		
+		// fetch the positions of the moving terminal residue
+		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-2, this.loop.length()-1);
+
+		
+		// compute the values b, c
+		double b = 0;
+		double c = 0;
+
+		for (int i = 0; i < TARGET_LENGTH; i++) {
+			Vector3D M = new Vector3D(movingTerminalAtoms.get(i));
+			Vector3D F = this.target[i];
+			Vector3D O = rotationAxis.projectOnto(new Point3D(M)).asVector();
+			
+			Vector3D r = O.vectorTo(M);
+			Vector3D f = O.vectorTo(F);
+			Vector3D s = r.norm().cross(rotationAxis.x.vectorTo(rotationAxis.y).norm());
+
+			double r2 = 2 * r.length();
+			b += r2 * f.dot(r.norm());
+			c += r2 * f.dot(s.norm());
+		}
+
+		/*
+		 * Compute alpha.
+		 */
+		double divisor = Math.sqrt(b*b+c*c);
+		
+		return Math.atan2(c / divisor, b / divisor);
+	}
+	
 	/**
 	 * Determines if the loop is closed.
 	 */
-	public boolean isLoopClosed() {
+	public double targetRMSDistance() {
 		// fetch the positions of the moving terminal residue
 		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-2, this.loop.length()-1);
 		Point3D[] moving = new Point3D[TARGET_LENGTH];
@@ -155,9 +189,7 @@ public class CyclicCoordinateDescent {
 			rmsd += tmp*tmp;
 		}
 		
-		rmsd = Math.sqrt(rmsd / TARGET_LENGTH);
-		
-		return rmsd <= TARGET_RMS_DISTANCE;
+		return Math.sqrt(rmsd / TARGET_LENGTH);
 	}
 	
 	/**

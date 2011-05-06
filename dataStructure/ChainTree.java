@@ -191,6 +191,7 @@ public class ChainTree {
 	 *  
 	 * @param i The first bond of the segment.
 	 * @param j The last bond of the segment.
+	 * @require i <= j
 	 * @return The points of the atoms in the segment.
 	 */
 	public List<Point3D> getBackboneAtomPositions(int i, int j) {
@@ -240,6 +241,7 @@ public class ChainTree {
 	 * 
 	 * @param i The starting bond (included).
 	 * @param j The ending bond (included).
+	 * @require i <= j
 	 * @require Neither i nor j may split a amino acid.
 	 */
 	public ChainTree getSubchain(int i, int j) {
@@ -612,7 +614,8 @@ public class ChainTree {
 			
 			do {
 				this.changeRotationAngle(i, angle);
-				angle -= Math.PI / 360;
+
+				angle -= Math.PI / 100;
 			} while(this.isClashing());
 		}
 	}
@@ -625,8 +628,7 @@ public class ChainTree {
 	public void move(Vector3D move) {
 		this.position = new Point3D(new Vector3D(this.position).add(move));
 		
-		this.worldTransformation = new TransformationMatrix(this.position.x, this.position.y, this.position.z);
-		this.worldTransformation.rotate(this.angle);
+		this.worldTransformation.multR(new TransformationMatrix(this.position.x, this.position.y, this.position.z));
 	}
 	
 	/**
@@ -635,7 +637,7 @@ public class ChainTree {
 	 * @param The angle to rotate with.
 	 */
 	public void rotate(double angle) {
-		this.angle -= angle;
+		this.angle += angle;
 		this.worldTransformation.rotate(this.angle);
 	}
 	
@@ -655,8 +657,10 @@ public class ChainTree {
 				tmpString.append("(HETERO)");
 			}
 			
-			tmpString.append("\n");
 			i++;
+			
+			if (i < this.backboneBonds.length)
+				tmpString.append(", ");
 		}
 		
 		return tmpString.toString();
