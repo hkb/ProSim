@@ -87,7 +87,7 @@ public class CTNode {
 		this.transformationMatrix = new TransformationMatrix(this.left.transformationMatrix, this.right.transformationMatrix);
 
 		// bounding volume
-		this.boundingVolume = this.left.boundingVolume.combine(this.left.boundingVolume, this.right.boundingVolume.transform(this.left.transformationMatrix));
+		this.boundingVolume = this.left.boundingVolume.combine(this.right.boundingVolume.transform(this.left.transformationMatrix));
 	}
 	
 	@Override

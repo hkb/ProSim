@@ -19,18 +19,20 @@ import tool.PDBParser;
 
 public class ChainTree {
 	
-	public CTNode root;											// the root node of the tree
-	public CTLeaf[] backboneBonds;								// the leaf nodes of the tree (the bonds of the protein backbone)
+	public CTNode root;												// the root node of the tree
+	public CTLeaf[] backboneBonds;									// the leaf nodes of the tree (the bonds of the protein backbone)
 	
-	private Point3D position;									// the position of the left most node in the world
-	private double angle;										// the rotating angle of this backbone
-	private TransformationMatrix worldTransformation;			// the transformation to transform from the proteins local coordinates to the world 
+	private Point3D position;										// the position of the left most node in the world
+	private double angle;											// the rotating angle of this backbone
+	public TransformationMatrix worldTransformation;				// the transformation to transform from the proteins local coordinates to the world 
 	
-	protected Set<Integer> alphaHelix = new HashSet<Integer>();	// set of all bonds in alpha helices
-	protected Set<Integer> betaSheet = new HashSet<Integer>();	// set of all bonds in beta sheets 
-	protected Set<Integer> heteroAtoms = new HashSet<Integer>();// set of all hetero atoms
+	public List<String> primaryStructure = new ArrayList<String>();
+	protected Set<Integer> alphaHelix = new HashSet<Integer>();		// set of all bonds in alpha helices
+	protected Set<Integer> betaSheet = new HashSet<Integer>();		// set of all bonds in beta sheets 
+	protected Set<Integer> heteroAtoms = new HashSet<Integer>();	// set of all hetero atoms
 	
-	private int lastRotatedBond;								// the last rotated bond
+	private Set<Integer> rotatedBonds = new HashSet<Integer>();		// the last rotated bond
+	private int lowestRotatedBond = Integer.MAX_VALUE;				// the index of the leftmost rotated bond
 	
 	
 
@@ -47,6 +49,7 @@ public class ChainTree {
 		this.alphaHelix = parser.alphaHelix;
 		this.betaSheet = parser.betaSheet;
 		this.heteroAtoms = parser.heteroAtoms;
+		this.primaryStructure = parser.primaryStructure;
 	}
 	
 	/**
@@ -444,7 +447,11 @@ public class ChainTree {
 	 * @return true if the tree clashes with it self.
 	 */
 	public boolean isClashing() {
-		return isClashing(this.root, this.root);
+		boolean isClashing = isClashing(this.root, this.root);
+		
+		this.rotatedBonds.clear();
+		
+		return isClashing;
 	}
 	
 	/**
@@ -461,13 +468,25 @@ public class ChainTree {
 			return false;
 		
 		// neighbouring atoms does not cause a clash
-		// neither does the neighbours neighbour since the bounding box of the i-th bond completely covers the i+1-th atom
-		if (left.isLeaf() && right.isLeaf() && left.low + 2 >= right.high)
+		// neither does the neighbours neighbour since the bounding box of the i-th bond covers the i+1-th atom
+		if (left.low + 2 >= right.high)
 			return false;
 		
-		// if no change has occurred between the trees then they have not changed position internal
-		if (!this.hasChanged(left, right))
+		// if no change has occurred between the trees then they have not changed position internaly
+		boolean hasChanged = false;
+		
+		for(int bond : this.rotatedBonds) {
+			hasChanged = (left.low <= bond && bond <= left.high) ||   // in left subtree
+		  				 (right.low <= bond && bond <= right.high) || // in right subtree
+		  				 (left.low <= bond && bond <= right.high);    // between left and right subtree
+			
+			if(hasChanged)
+				break;
+		}
+		
+		if(!hasChanged)
 			return false;
+			
 		
 		// check for overlap
 		boolean overlap = left.boundingVolume.isOverlaping(right.boundingVolume.transform(this.getTransformationMatrix(left.low, right.low)));
@@ -502,33 +521,17 @@ public class ChainTree {
 	}
 	
 	/**
-	 * Determines if the two sub chains has changed internally by the last rotation.
-	 * 
-	 * @param left The left most sub chain.
-	 * @param right The rightmost sub chain.
-	 * @require left.low <= right.low
-	 * @return true if a bond affecting the subtrees has changed
-	 */
-	private boolean hasChanged(CTNode left, CTNode right) {
-		if (right.low < left.low) {
-			throw new IllegalArgumentException("Invalid argument order!");
-		}
-		
-		int lastRotatedBond = this.lastRotatedBond;
-		
-		return (left.low <= lastRotatedBond && lastRotatedBond <= left.high) ||   // in left subtree
-			   (right.low <= lastRotatedBond && lastRotatedBond <= right.high) || // in right subtree
-			   (left.low <= lastRotatedBond && lastRotatedBond <= right.high);    // between left and right subtree
-	}
-	
-	/**
 	 * Determines if this chain tree clashes with the other.
 	 * 
 	 * @param other The other chain tree.
 	 * @return true if a clash occurs else false.
 	 */
 	public boolean areClashing(ChainTree other) {
-		return areClashing(this.root, other.root, other);
+		boolean areClashing = areClashing(this.root, other.root, other);
+		
+		this.lowestRotatedBond = Integer.MAX_VALUE;
+		
+		return areClashing;
 	}
 	
 	/**
@@ -543,7 +546,7 @@ public class ChainTree {
 	private boolean areClashing(CTNode thisNode, CTNode otherNode, ChainTree other) {
 		// has this node been moved in the world?
 		// this works because only the chain segment to the right of the last rotation is moved in the world
-		if (thisNode.high < this.lastRotatedBond)
+		if (thisNode.high < this.lowestRotatedBond)
 			return false;
 		
 		// check for overlap
@@ -583,7 +586,7 @@ public class ChainTree {
 	 * Changes the rotation angle of the i-th bond by the specified angle.
 	 * 
 	 * @param i The index of the bond.
-	 * @param angle The angle to rotate the bond by.
+	 * @param angle The angle to rotate the bond by in radians.
 	 */
 	public void changeRotationAngle(int i, double angle) {
 		CTLeaf bond = this.backboneBonds[i];
@@ -600,24 +603,34 @@ public class ChainTree {
 		}
 		
 		// remember the last rotated bond for checking algorithms
-		this.lastRotatedBond = i;
+		this.rotatedBonds.add(i);
+		this.lowestRotatedBond = (i < this.lowestRotatedBond) ? i : this.lowestRotatedBond;
 	}
-	
+
 	/**
 	 * Unfolds the protein into some, non clashing, confirmation.
 	 */
 	public void unfold() {
-		List<Double> dihedralAngles = this.getDihedralAngles();
+		List<Double> dihedralAngles = new ArrayList<Double>();
 		
-		for (int i : this.rotatableBonds()) {
-			double angle = dihedralAngles.get((int) (Math.random() * dihedralAngles.size()));
+		// filter phi and psi angles
+		int i = 0;
+		for (double angle : this.getDihedralAngles()) {
+			if (angle != 0.0 && i % 3 != 2) {
+				dihedralAngles.add(angle);
+			}
 			
-			do {
-				this.changeRotationAngle(i, angle);
-
-				angle -= Math.PI / 100;
-			} while(this.isClashing());
+			i++;
 		}
+		
+		// unfold
+		do {
+			for (int bond : this.rotatableBonds()) {
+				double angle = dihedralAngles.get((int) (Math.random() * dihedralAngles.size()));
+				
+				this.changeRotationAngle(bond, angle);
+			}
+		} while(this.isClashing());
 	}
 	
 	/**
@@ -634,7 +647,7 @@ public class ChainTree {
 	/**
 	 * Rotate the entire protein by the given angle.
 	 * 
-	 * @param The angle to rotate with.
+	 * @param The angle to rotate with in radians.
 	 * @warning THIS METHOD ONLY ROTATES ABOUT THE AXIS FROM ORIGO TO THE FIRST ATOM!
 	 */
 	public void rotate(double angle) {

@@ -15,6 +15,7 @@ import math.Point3D;
 
 public class PDBParser {
 	
+	public List<String> primaryStructure = new ArrayList<String>();
 	public List<Point3D> backbone = new ArrayList<Point3D>();
 	public Set<Integer> alphaHelix = new HashSet<Integer>();
 	public Set<Integer> betaSheet = new HashSet<Integer>();
@@ -43,6 +44,7 @@ public class PDBParser {
 				
 				if (type.equals("ATOM")) {
 					parseAtom(record);
+					parsePrimaryStructure(record);
 				} else if (type.equals("HETATM")) {
 					//parseHeteroAtom(record);
 				} else if (type.equals("HELIX")) {
@@ -74,6 +76,14 @@ public class PDBParser {
 
 			this.backbone.add(new Point3D(x, y, z));
 			this.atomCount++;
+		}
+	}
+	
+	private void parsePrimaryStructure(String record) {
+		String name = columns(record, 13, 16);
+		
+		if(!this.endOfBackbone && name.equals("N")) {
+			this.primaryStructure.add(columns(record, 17, 20));
 		}
 	}
 	

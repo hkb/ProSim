@@ -20,14 +20,13 @@ public interface BoundingVolume {
 	public float volume();
 	
 	/**
-	 * Computes a new bounding volume containing the combined volumes of the 
-	 * given volumes.
+	 * Computes a new bounding volume containing the combined volume of this
+	 * and the other volume.
 	 * 
-	 * @param left A BoundingVolume.
-	 * @param right A BoundingVolume.
+	 * @param other A BoundingVolume.
 	 * @return A combined bounding volume.
 	 */
-	public BoundingVolume combine(BoundingVolume left, BoundingVolume right);
+	public BoundingVolume combine(BoundingVolume other);
 	
 	/**
 	 * Compute a transformed version of the bounding volume given the transformation matrix.

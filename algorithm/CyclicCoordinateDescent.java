@@ -27,9 +27,6 @@ import geom3d.Line3d;
  */
 public class CyclicCoordinateDescent {
 	
-	public static int TARGET_LENGTH;
-	public static int MAX_ITERATIONS = 20;
-	
 	private ChainTree loop;						// the loop to close including the target anchor
 	private Vector3D[] target;					// the position of the target
 
@@ -38,13 +35,11 @@ public class CyclicCoordinateDescent {
 	 * Creates a new CCD computer from the unfolded loop and the target
 	 * residue.
 	 * 
-	 * @param loop The loop to close including the target residue.
+	 * @param cTree The backbone segment that contains the loop and ends in the target.
 	 * @param target The target residue.
 	 */
-	public CyclicCoordinateDescent(ChainTree loop, ChainTree target) {
-		TARGET_LENGTH = target.length()+1;
-		
-		this.target = new Vector3D[TARGET_LENGTH];
+	public CyclicCoordinateDescent(ChainTree cTree, ChainTree target) {		
+		this.target = new Vector3D[target.length()+1];
 		
 		int i = 0;
 		for (Point3D position : target.getBackboneAtomPositions()) {
@@ -54,7 +49,7 @@ public class CyclicCoordinateDescent {
 		}
 		
 		// store loop 
-		this.loop = loop;
+		this.loop = cTree;
 	}
 	
 	/**
@@ -70,19 +65,19 @@ public class CyclicCoordinateDescent {
 		
 		// fetch the positions of the moving terminal residue
 		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-2, this.loop.length()-1);
-		Vector3D[] moving = new Vector3D[TARGET_LENGTH];
+		Vector3D[] moving = new Vector3D[this.target.length];
 		
-		for (int i = 0; i < TARGET_LENGTH; i++) {
+		for (int i = 0; i < this.target.length; i++) {
 			moving[i] = new Vector3D(movingTerminalAtoms.get(i));
 		}
 		
 		// compute the vectors r, t, n
-		Vector3D[] r = new Vector3D[TARGET_LENGTH];
-		Vector3D[] f = new Vector3D[TARGET_LENGTH];
-		Vector3D[] s = new Vector3D[TARGET_LENGTH];
+		Vector3D[] r = new Vector3D[this.target.length];
+		Vector3D[] f = new Vector3D[this.target.length];
+		Vector3D[] s = new Vector3D[this.target.length];
 
 		
-		for (int i = 0; i < TARGET_LENGTH; i++) {
+		for (int i = 0; i < this.target.length; i++) {
 			Vector3D M = moving[i];
 			Vector3D F = this.target[i];
 			Vector3D O = rotationAxis.projectOnto(new Point3D(M)).asVector();
@@ -98,7 +93,7 @@ public class CyclicCoordinateDescent {
 		double numerator = 0;
 		double denominator = 0;
 		
-		for (int i = 0; i < TARGET_LENGTH; i++) {
+		for (int i = 0; i < this.target.length; i++) {
 			numerator += f[i].dot(s[i].norm()) * r[i].length();
 			denominator += f[i].dot(r[i].norm()) * r[i].length();
 		}
@@ -110,7 +105,7 @@ public class CyclicCoordinateDescent {
 		 */
 		double secondDerivative = 0;
 		
-		for (int i = 0; i < TARGET_LENGTH; i++) {
+		for (int i = 0; i < this.target.length; i++) {
 			secondDerivative += Math.cos(alpha) * f[i].dot(r[i].norm()) * 2
 								* r[i].length() + Math.sin(alpha) * f[i].dot(s[i].norm()) * 2
 								* r[i].length();	
@@ -138,14 +133,14 @@ public class CyclicCoordinateDescent {
 		Line3D rotationAxis = new Line3D(bondAtoms.get(0), bondAtoms.get(1));
 		
 		// fetch the positions of the moving terminal residue
-		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-TARGET_LENGTH+1, this.loop.length()-1);
+		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-this.target.length+1, this.loop.length()-1);
 
 		
 		// compute the values b, c
 		double b = 0;
 		double c = 0;
 
-		for (int i = 0; i < TARGET_LENGTH; i++) {
+		for (int i = 0; i < this.target.length; i++) {
 			Vector3D M = new Vector3D(movingTerminalAtoms.get(i));
 			Vector3D F = this.target[i];
 			Vector3D O = rotationAxis.projectOnto(new Point3D(M)).asVector();
@@ -172,22 +167,22 @@ public class CyclicCoordinateDescent {
 	 */
 	public double targetRMSDistance() {
 		// fetch the positions of the moving terminal residue
-		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-TARGET_LENGTH+1, this.loop.length()-1);
-		Point3D[] moving = new Point3D[TARGET_LENGTH];
+		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-this.target.length+1, this.loop.length()-1);
+		Point3D[] moving = new Point3D[this.target.length];
 		
-		for (int i = 0; i < TARGET_LENGTH; i++) {
+		for (int i = 0; i < this.target.length; i++) {
 			moving[i] = movingTerminalAtoms.get(i);
 		}
 		
 		//
 		double rmsd = 0;
 		
-		for (int i = 0; i < TARGET_LENGTH; i++) {
+		for (int i = 0; i < this.target.length; i++) {
 			double tmp = moving[i].distance(new Point3D(this.target[i]));
 			rmsd += tmp*tmp;
 		}
 		
-		return Math.sqrt(rmsd / TARGET_LENGTH);
+		return Math.sqrt(rmsd / this.target.length);
 	}
 	
 	/**

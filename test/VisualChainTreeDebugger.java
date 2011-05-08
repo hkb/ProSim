@@ -72,13 +72,13 @@ public class VisualChainTreeDebugger {
 		paintSecondaryStructureBoundingVolumes(cTree, node.right, scene);
 	}
 	
-	private static void paintBoundingVolume(ChainTree cTree, CTNode node, ChainTreeScene scene) {
+	public static void paintBoundingVolume(ChainTree cTree, CTNode node, ChainTreeScene scene) {
 		try {
 			Capsule vol = ((LinesegmentSweptSphere) node.boundingVolume.transform(cTree.getWorldTransformation(node.low))).volume;
 
 			Color color = (node.isLocked) ? new Color(255,0,0, 150) : new Color(0,0,255, 150);
 			scene.scene.addShape(new Capsule3d(new Point3d(vol.p1.x(), vol.p1.y(), vol.p1.z()), new Point3d(vol.p2.x(), vol.p2.y(), vol.p2.z()), vol.rad), color);
-		} catch (BadTransformException e) {
+		} catch (Exception e) {
 			System.err.println(e);
 		}
 	}

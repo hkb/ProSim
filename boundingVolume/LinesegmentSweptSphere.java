@@ -54,41 +54,56 @@ public class LinesegmentSweptSphere implements BoundingVolume {
 
 	@Override
 	public boolean isOverlaping(BoundingVolume other) {
-		return this.volume.overlaps(((LinesegmentSweptSphere) other).volume);
+		if (other instanceof LinesegmentSweptSphere) {
+			return this.volume.overlaps(((LinesegmentSweptSphere) other).volume);
+			
+		} else if (other instanceof Empty) {
+			return false;
+
+		} else {
+			throw new IllegalArgumentException("Unsupported bounding volume!");
+		}
 	}
 
 	@Override
 	public float volume() {
 		return this.volume.volume();
 	}
-
+	
 	@Override
-	public BoundingVolume combine(BoundingVolume left, BoundingVolume right) {
-		LinesegmentSweptSphere l = (LinesegmentSweptSphere) left;
-		LinesegmentSweptSphere r = (LinesegmentSweptSphere) right;
-		
-		// intermediate stuff
-		Vector p1LOrig = l.volume.p1;
-		Vector p2LOrig = l.volume.p2;
-		
-		geom3d.Point3d p1L = new geom3d.Point3d(p1LOrig.x(), p1LOrig.y(), p1LOrig.z());
-		geom3d.Point3d p2L = new geom3d.Point3d(p2LOrig.x(), p2LOrig.y(), p2LOrig.z());
+	public BoundingVolume combine(BoundingVolume other) {
+		if (other instanceof LinesegmentSweptSphere) {
+			LinesegmentSweptSphere otherSphere = (LinesegmentSweptSphere) other; 
 
-		Vector p1ROrig = r.volume.p1;
-		Vector p2ROrig = r.volume.p2;
-		
-		geom3d.Point3d p1R = new geom3d.Point3d(p1ROrig.x(), p1ROrig.y(), p1ROrig.z());
-		geom3d.Point3d p2R = new geom3d.Point3d(p2ROrig.x(), p2ROrig.y(), p2ROrig.z());
+			// intermediate stuff
+			Vector p1LOrig = this.volume.p1;
+			Vector p2LOrig = this.volume.p2;
+			
+			geom3d.Point3d p1L = new geom3d.Point3d(p1LOrig.x(), p1LOrig.y(), p1LOrig.z());
+			geom3d.Point3d p2L = new geom3d.Point3d(p2LOrig.x(), p2LOrig.y(), p2LOrig.z());
+	
+			Vector p1ROrig = otherSphere.volume.p1;
+			Vector p2ROrig = otherSphere.volume.p2;
+			
+			geom3d.Point3d p1R = new geom3d.Point3d(p1ROrig.x(), p1ROrig.y(), p1ROrig.z());
+			geom3d.Point3d p2R = new geom3d.Point3d(p2ROrig.x(), p2ROrig.y(), p2ROrig.z());
+	
+			Capsule3d newBound = Capsule3d.createBoundingCapsule_MaxDist(new Capsule3d(p1L, p2L, this.volume.rad), new Capsule3d(p1R, p2R, otherSphere.volume.rad));
+	
+			geom3d.Point3d newA = newBound.segment.getA();
+			geom3d.Point3d newB = newBound.segment.getB();
+			
+			Vector p1New = new Vector(newA.x, newA.y, newA.z);
+			Vector p2New = new Vector(newB.x, newB.y, newB.z);
+			
+			return new LinesegmentSweptSphere(new Capsule(p1New, p2New, newBound.rad));
 
-		Capsule3d newBound = Capsule3d.createBoundingCapsule_MaxDist(new Capsule3d(p1L, p2L, l.volume.rad), new Capsule3d(p1R, p2R, r.volume.rad));
+		} else if (other instanceof Empty) {
+			return this;
 
-		geom3d.Point3d newA = newBound.segment.getA();
-		geom3d.Point3d newB = newBound.segment.getB();
-		
-		Vector p1New = new Vector(newA.x, newA.y, newA.z);
-		Vector p2New = new Vector(newB.x, newB.y, newB.z);
-		
-		return new LinesegmentSweptSphere(new Capsule(p1New, p2New, newBound.rad));
+		} else {
+			throw new IllegalArgumentException("Unsupported bounding volume!");
+		}
 	}
 
 	@Override
