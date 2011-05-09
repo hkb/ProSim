@@ -11,11 +11,13 @@ import java.util.StringTokenizer;
 
 import javax.vecmath.Point3d;
 
+import chemestry.AminoAcid;
+
 import math.Point3D;
 
 public class PDBParser {
 	
-	public List<String> primaryStructure = new ArrayList<String>();
+	public List<AminoAcid.Type> primaryStructure = new ArrayList<AminoAcid.Type>();
 	public List<Point3D> backbone = new ArrayList<Point3D>();
 	public Set<Integer> alphaHelix = new HashSet<Integer>();
 	public Set<Integer> betaSheet = new HashSet<Integer>();
@@ -69,7 +71,7 @@ public class PDBParser {
 		String name = columns(record, 13, 16);
 		
 		// is backbone
-		if(!this.endOfBackbone && (name.equals("N") || name.equals("CA") || name.equals("C"))) {
+		if(!this.endOfBackbone && (name.equals("N") || name.equals("CA") || name.equals("C"))) {			
 			double x = Double.parseDouble(columns(record, 31, 38));
 			double y = Double.parseDouble(columns(record, 39, 46));
 			double z = Double.parseDouble(columns(record, 47, 54));
@@ -83,7 +85,7 @@ public class PDBParser {
 		String name = columns(record, 13, 16);
 		
 		if(!this.endOfBackbone && name.equals("N")) {
-			this.primaryStructure.add(columns(record, 17, 20));
+			this.primaryStructure.add(AminoAcid.Type.valueOf(columns(record, 17, 20)));
 		}
 	}
 	

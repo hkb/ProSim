@@ -23,10 +23,9 @@ public class EndlessCCDLoopCloser {
 		 */
 		String pdbId = "1SIS"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T, 1SIS, 1E2B
 		int segmentNo = 1;
-		boolean closeTheHelix = true;
+		boolean closeTheHelix = false;
 		double targetRMSDistance = 0.04;
 		int maxIterations = 10000;
-
 
 		/*
 		 * Setup.
@@ -84,8 +83,8 @@ public class EndlessCCDLoopCloser {
 		scene.add(cTree.getSubchain(end+1, end+5), 20);
 
 		// ready
-		Thread.sleep(5000);
-		unfold(t1, dihedralAngles, start, end);		
+		Thread.sleep(2000);
+		unfold(t1, t2, dihedralAngles, start, end);		
 		scene.repaint();
 		Thread.sleep(2000);
 
@@ -95,7 +94,7 @@ public class EndlessCCDLoopCloser {
 		int itt = 0;
 		
 		while (true) {			
-			for (int bond : rotateableBonds) {				
+			for (int bond : rotateableBonds) {
 				double angle = anglePredictor.getRotationAngle(bond);
 
 				t1.changeRotationAngle(bond, angle);
@@ -112,7 +111,7 @@ public class EndlessCCDLoopCloser {
 					
 					itt = 0;
 					Thread.sleep(500);
-					unfold(t1, dihedralAngles, start, end);
+					unfold(t1, t2, dihedralAngles, start, end);
 					scene.repaint(t1);
 					Thread.sleep(500);
 				}	
@@ -125,7 +124,7 @@ public class EndlessCCDLoopCloser {
 				
 				itt = 0;
 				Thread.sleep(500);
-				unfold(t1, dihedralAngles, start, end);
+				unfold(t1, t2, dihedralAngles, start, end);
 				scene.repaint(t1);
 				Thread.sleep(500);
 			}
@@ -136,7 +135,7 @@ public class EndlessCCDLoopCloser {
 	 * 
 	 * @param cTree
 	 */
-	private static void unfold(ChainTree cTree, List<Double> angles, int start, int end) {
+	private static void unfold(ChainTree cTree, ChainTree other, List<Double> angles, int start, int end) {
 		do {
 			for (int bond : cTree.rotatableBonds()) {
 				if (start <= bond && bond <= end) {
@@ -144,6 +143,6 @@ public class EndlessCCDLoopCloser {
 					cTree.changeRotationAngle(bond, angle);			
 				}
 			}
-		} while (cTree.isClashing());
+		} while (cTree.isClashing() || cTree.areClashing(other));
 	}
 }

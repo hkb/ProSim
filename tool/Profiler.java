@@ -39,7 +39,7 @@ public class Profiler {
 			this.counter.put(area, 1);
 		}
 		
-		this.timer.put(area, System.currentTimeMillis());
+		this.timer.put(area, System.nanoTime());
 	}
 
 	/**
@@ -49,11 +49,13 @@ public class Profiler {
 	 * @require The execution must be in an area with the same name.
 	 */
 	public void exit(String area) {
+		long time = System.nanoTime();
+		
 		if(!this.timer.containsKey(area)) {
 			throw new IllegalArgumentException("Isn't timing " + area);
 		}
 		
-		long time = System.currentTimeMillis() - this.timer.get(area);
+		time -= this.timer.get(area);
 		
 		if(this.time.containsKey(area)) {
 			this.time.put(area, this.time.get(area) + time);
@@ -75,8 +77,8 @@ public class Profiler {
 		for (String area : this.counter.keySet()) {
 			output.append(area + ": ");
 			output.append("count: " + this.counter.get(area));
-			output.append(" total time: " + this.time.get(area));
-			output.append("ms relative time: " + this.counter.get(area)/this.counter.get(area));
+			output.append(" total time: " + this.time.get(area)/1000000.0);
+			output.append("ms relative time: " + (this.time.get(area)/1000000.0)/this.counter.get(area));
 			output.append("ms\n");
 		}
 		

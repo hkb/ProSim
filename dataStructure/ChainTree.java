@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import chemestry.AminoAcid;
+
 import math.Point3D;
 import math.Vector3D;
 import math.matrix.TransformationMatrix;
@@ -26,7 +28,7 @@ public class ChainTree {
 	private double angle;											// the rotating angle of this backbone
 	public TransformationMatrix worldTransformation;				// the transformation to transform from the proteins local coordinates to the world 
 	
-	public List<String> primaryStructure = new ArrayList<String>();
+	public List<AminoAcid.Type> primaryStructure = new ArrayList<AminoAcid.Type>();
 	protected Set<Integer> alphaHelix = new HashSet<Integer>();		// set of all bonds in alpha helices
 	protected Set<Integer> betaSheet = new HashSet<Integer>();		// set of all bonds in beta sheets 
 	protected Set<Integer> heteroAtoms = new HashSet<Integer>();	// set of all hetero atoms
