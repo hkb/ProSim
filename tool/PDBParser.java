@@ -14,13 +14,14 @@ import javax.vecmath.Point3d;
 import chemestry.AminoAcid;
 
 import math.Point3D;
+import math.Tuple2;
 
 public class PDBParser {
 	
 	public List<AminoAcid.Type> primaryStructure = new ArrayList<AminoAcid.Type>();
-	public List<Point3D> backbone = new ArrayList<Point3D>();
-	public Set<Integer> alphaHelix = new HashSet<Integer>();
-	public Set<Integer> betaSheet = new HashSet<Integer>();
+	public List<Point3D> backboneAtomPositions = new ArrayList<Point3D>();
+	public List<Tuple2<Integer, Integer>> helixes = new ArrayList<Tuple2<Integer, Integer>>();
+	public List<Tuple2<Integer, Integer>> sheets = new ArrayList<Tuple2<Integer, Integer>>();
 	public Set<Integer> heteroAtoms = new HashSet<Integer>();
 	
 	// small state variables
@@ -76,7 +77,7 @@ public class PDBParser {
 			double y = Double.parseDouble(columns(record, 39, 46));
 			double z = Double.parseDouble(columns(record, 47, 54));
 
-			this.backbone.add(new Point3D(x, y, z));
+			this.backboneAtomPositions.add(new Point3D(x, y, z));
 			this.atomCount++;
 		}
 	}
@@ -107,13 +108,10 @@ public class PDBParser {
 	 * @param record The PDB record.
 	 */
 	private void parseHelix (String record) {
-		int i = Integer.parseInt(columns(record, 22, 25)) * 3;
-		int j = Integer.parseInt(columns(record, 34, 37)) * 3;
-		
-		while (i <= j) {
-			this.alphaHelix.add(i);
-			i++;
-		}
+		int i = Integer.parseInt(columns(record, 22, 25));
+		int j = Integer.parseInt(columns(record, 34, 37));
+
+		this.helixes.add(new Tuple2<Integer, Integer>(i, j));
 	}
 
 	/**
@@ -122,13 +120,10 @@ public class PDBParser {
 	 * @param record The PDB record.
 	 */
 	private void parseSheet (String record) {
-		int i = Integer.parseInt(columns(record, 23, 26)) * 3;
-		int j = Integer.parseInt(columns(record, 34, 37)) * 3;
-		
-		while (i <= j) {
-			this.betaSheet.add(i);
-			i++;
-		}
+		int i = Integer.parseInt(columns(record, 23, 26));
+		int j = Integer.parseInt(columns(record, 34, 37));
+
+		this.sheets.add(new Tuple2<Integer, Integer>(i, j));
 	}
 	
 	/**

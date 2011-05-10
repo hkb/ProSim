@@ -8,6 +8,8 @@ import boundingVolume.Empty;
 
 import algorithm.CyclicCoordinateDescent;
 
+import math.Line3D;
+import math.Point3D;
 import math.Tuple2;
 import math.Vector3D;
 import tool.BackboneSegmentAnalyser;
@@ -23,7 +25,7 @@ public class EndlessCCDLoopCloser {
 		 */
 		String pdbId = "1SIS"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T, 1SIS, 1E2B
 		int segmentNo = 1;
-		boolean closeTheHelix = false;
+		boolean closeTheHelix = true;
 		double targetRMSDistance = 0.04;
 		int maxIterations = 10000;
 
@@ -48,8 +50,8 @@ public class EndlessCCDLoopCloser {
 		}
 
 		// create subtrees
-		AdjustableChainTree t1 = cTree.getSubchain(0, end-1+3);
-		AdjustableChainTree t2 = cTree.getSubchain(end+1+3, cTree.length()-1);
+		AdjustableChainTree t1 = cTree.getSubchain(1, end+1);
+		AdjustableChainTree t2 = cTree.getSubchain(end+2, cTree.length());
 		
 		ChainTree[] cTrees = {t1, t2}; 
 		ChainTreeScene scene = new ChainTreeScene(cTrees);
@@ -73,14 +75,16 @@ public class EndlessCCDLoopCloser {
 		List<Integer> rotateableBonds = new ArrayList<Integer>();
 		
 		for (int bond : t1.rotatableBonds()) {
-			if (start <= bond && bond <= end) {
+			int aminoAcid = t1.getAminoAcid(bond);
+			
+			if (start <= aminoAcid && aminoAcid <= end) {
 				rotateableBonds.add(bond);
 			}
 		}
 		
 		// set up CCD algorithm
-		CyclicCoordinateDescent anglePredictor = new CyclicCoordinateDescent(t1, t1.getSubchain(t1.length()-2, t1.length()-1));
-		scene.add(cTree.getSubchain(end+1, end+5), 20);
+		CyclicCoordinateDescent anglePredictor = new CyclicCoordinateDescent(t1, t1.getSubchain(t1.length(), t1.length()));
+		scene.add(cTree.getSubchain(t1.length(), t1.length()+1), 20);
 
 		// ready
 		Thread.sleep(2000);
@@ -93,12 +97,12 @@ public class EndlessCCDLoopCloser {
 		 */
 		int itt = 0;
 		
-		while (true) {			
+		while (true) {
 			for (int bond : rotateableBonds) {
 				double angle = anglePredictor.getRotationAngle(bond);
 
 				t1.changeRotationAngle(bond, angle);
-			
+
 				scene.repaint(t1);
 
 				if (anglePredictor.targetRMSDistance() < targetRMSDistance) { 
@@ -136,9 +140,12 @@ public class EndlessCCDLoopCloser {
 	 * @param cTree
 	 */
 	private static void unfold(ChainTree cTree, ChainTree other, List<Double> angles, int start, int end) {
+		int startBond = cTree.getPhi(start);
+		int endBond = cTree.getPsi(end);
+		
 		do {
 			for (int bond : cTree.rotatableBonds()) {
-				if (start <= bond && bond <= end) {
+				if (startBond <= bond && bond <= endBond) {
 					double angle = angles.get((int) (Math.random() * angles.size()));
 					cTree.changeRotationAngle(bond, angle);			
 				}

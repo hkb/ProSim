@@ -122,12 +122,10 @@ public class ChainTreeScene {
 				Color color;
 				
 				// add GUI elements to scene
-				if (cTree.isInAlphaHelix(i)) {
+				if (cTree.isInHelix(cTree.getAminoAcid(i))) {
 					color = this.colorAlphaHelix;
-				} else if (cTree.isInBetaSheet(i)) {
+				} else if (cTree.isInSheet(cTree.getAminoAcid(i))) {
 					color = this.colorBetaSheet;
-				} else if (cTree.isHeteroAtomBond(i)) {
-					color = this.colorHeteroAtom;
 				} else {
 					color = this.colorBackbone[i%3];
 				}

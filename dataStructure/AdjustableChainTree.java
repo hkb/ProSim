@@ -8,6 +8,7 @@ import java.util.List;
 import javax.vecmath.Point3d;
 
 import math.Point3D;
+import math.Tuple2;
 import math.matrix.TransformationMatrix;
 
 
@@ -72,9 +73,8 @@ public class AdjustableChainTree extends ChainTree {
 		super(cTree.getBackboneAtomPositions());
 		
 		// copy secondary structure information
-		this.alphaHelix = cTree.alphaHelix;
-		this.betaSheet = cTree.betaSheet;
-		this.heteroAtoms = cTree.heteroAtoms;
+		this.helixes = cTree.helixes;
+		this.sheets = cTree.sheets;
 		
 		// optimise the tree
 		this.lockAndGroupPeptidePlanes();
@@ -86,8 +86,8 @@ public class AdjustableChainTree extends ChainTree {
 	
 	
 	@Override
-	public AdjustableChainTree getSubchain(int i, int j) {
-		return new AdjustableChainTree(super.getSubchain(i, j));
+	public AdjustableChainTree getSubchain(int start, int end) {
+		return new AdjustableChainTree(super.getSubchain(start, end));
 	}
 	
 	@Override
@@ -122,36 +122,8 @@ public class AdjustableChainTree extends ChainTree {
 	 * Locks and groups alpha helices.
 	 */
 	private void lockAndGroupAlphaHelices() {
-		if (super.alphaHelix.isEmpty())
-			return;
-		
-		List<Integer> helixBonds = new ArrayList<Integer>();
-		
-		// lock alpha helices
-		for (int i : super.alphaHelix) {
-			if (i < this.backboneBonds.length) {
-				this.backboneBonds[i].isLocked = true;
-				helixBonds.add(i);
-			}
-		}
-		
-		// detect alpha helix subsections
-		Collections.sort(helixBonds);
-		
-		int start = helixBonds.get(0);
-		int last = start;
-				
-		for (int i : helixBonds) {
-			if (i > last+1) {
-				this.groupAndLockSegment(start, last);
-				start = i;
-			}
-			
-			last = i;
-		}
-		
-		if (last != start) {
-			this.groupAndLockSegment(start, last);
+		for (Tuple2<Integer, Integer> helix : super.helixes) {
+			this.groupAndLockSegment(helix.x, helix.y);
 		}
 	}
 	
@@ -159,47 +131,22 @@ public class AdjustableChainTree extends ChainTree {
 	 * Locks and groups beta sheets. 
 	 */
 	private void lockAndGroupBetaSheets() {
-		if (super.betaSheet.isEmpty())
-			return;
-		
-		List<Integer> betaSheets = new ArrayList<Integer>();
-		
-		// lock beta sheets
-		for (int i : super.betaSheet) {
-			if (i < this.backboneBonds.length) {
-				this.backboneBonds[i].isLocked = true;
-				betaSheets.add(i);
-			}
-		}
-		
-		// detect beta sheet subsections
-		Collections.sort(betaSheets);
-		
-		int start = betaSheets.get(0);
-		int last = start;
-				
-		for (int i : betaSheets) {
-			if (i > last+1) {
-				this.groupAndLockSegment(start, last);
-				start = i;
-			}
-			
-			last = i;
-		}
-		
-		if (last != start) {
-			this.groupAndLockSegment(start, last);
+		for (Tuple2<Integer, Integer> sheet : super.sheets) {
+			this.groupAndLockSegment(sheet.x, sheet.y);
 		}
 	}
 	
 	/**
 	 * Groups and locks any given segment of the backbone covering the 
-	 * i-th to j-th atom.
+	 * i-th to j-th amino acid.
 	 * 
-	 * @param i The first backbone bond of the structure.
-	 * @param j The last backbone bond of the structure. 
+	 * @param i The first amino acid of the structure.
+	 * @param j The last amino acid of the structure. 
 	 */
-	private void groupAndLockSegment(int i, int j) {
+	private void groupAndLockSegment(int start, int end) {
+		int i = super.getPhi(start);
+		int j = super.getPsi(end);
+		
 		CTNode node = this.group(i, j);
 
 		this.lockSubtree(node);		

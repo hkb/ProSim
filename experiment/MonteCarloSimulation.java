@@ -37,7 +37,7 @@ public class MonteCarloSimulation {
 
 		// setup scene
 		ChainTreeScene scene = new ChainTreeScene(cTree);
-		scene.add(target, 10);
+		//scene.add(target, 10);
 		
 		// ready, set
 		double energy = energyFunction.compute();

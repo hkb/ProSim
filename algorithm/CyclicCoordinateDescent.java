@@ -39,7 +39,7 @@ public class CyclicCoordinateDescent {
 	 * @param target The target residue.
 	 */
 	public CyclicCoordinateDescent(ChainTree cTree, ChainTree target) {		
-		this.target = new Vector3D[target.length()+1];
+		this.target = new Vector3D[target.length()*3];
 		
 		int i = 0;
 		for (Point3D position : target.getBackboneAtomPositions()) {
@@ -55,17 +55,17 @@ public class CyclicCoordinateDescent {
 	
 	public double getRotationAngle(int bond) {
 		// determine the rotation axis of the bond
-		List<Point3D> bondAtoms = this.loop.getBackboneAtomPositions(bond, bond);
-		Line3D rotationAxis = new Line3D(bondAtoms.get(0), bondAtoms.get(1));
+		int aminoAcid = this.loop.getAminoAcid(bond);
+		List<Point3D> bondAtoms = this.loop.getBackboneAtomPositions(aminoAcid, aminoAcid);
+		Line3D rotationAxis = new Line3D(bondAtoms.get(bond % 3), bondAtoms.get(bond % 3 + 1));
 		
 		// fetch the positions of the moving terminal residue
-		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-this.target.length+1, this.loop.length()-1);
-
+		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length(), this.loop.length());
 		
 		// compute the values b, c
 		double b = 0;
 		double c = 0;
-
+		
 		for (int i = 0; i < this.target.length; i++) {
 			Vector3D M = new Vector3D(movingTerminalAtoms.get(i));
 			Vector3D F = this.target[i];
@@ -79,7 +79,7 @@ public class CyclicCoordinateDescent {
 			b += r2 * f.dot(r.norm());
 			c += r2 * f.dot(s.norm());
 		}
-
+		
 		/*
 		 * Compute alpha.
 		 */
@@ -93,7 +93,7 @@ public class CyclicCoordinateDescent {
 	 */
 	public double targetRMSDistance() {
 		// fetch the positions of the moving terminal residue
-		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length()-this.target.length+1, this.loop.length()-1);
+		List<Point3D> movingTerminalAtoms = this.loop.getBackboneAtomPositions(this.loop.length(), this.loop.length());
 		
 		// calculate rmsd
 		double rmsd = 0;

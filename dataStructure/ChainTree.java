@@ -9,6 +9,7 @@ import java.util.Set;
 import chemestry.AminoAcid;
 
 import math.Point3D;
+import math.Tuple2;
 import math.Vector3D;
 import math.matrix.TransformationMatrix;
 
@@ -29,9 +30,8 @@ public class ChainTree {
 	public TransformationMatrix worldTransformation;				// the transformation to transform from the proteins local coordinates to the world 
 	
 	public List<AminoAcid.Type> primaryStructure = new ArrayList<AminoAcid.Type>();
-	protected Set<Integer> alphaHelix = new HashSet<Integer>();		// set of all bonds in alpha helices
-	protected Set<Integer> betaSheet = new HashSet<Integer>();		// set of all bonds in beta sheets 
-	protected Set<Integer> heteroAtoms = new HashSet<Integer>();	// set of all hetero atoms
+	public List<Tuple2<Integer,Integer>> helixes = new ArrayList<Tuple2<Integer,Integer>>();		// set of all bonds in alpha helices
+	public List<Tuple2<Integer,Integer>> sheets = new ArrayList<Tuple2<Integer,Integer>>();		// set of all bonds in beta sheets 
 	
 	private Set<Integer> rotatedBonds = new HashSet<Integer>();		// the last rotated bond
 	private int lowestRotatedBond = Integer.MAX_VALUE;				// the index of the leftmost rotated bond
@@ -44,13 +44,12 @@ public class ChainTree {
 	 * @param pdbId The PDB id to create a chain tree for.
 	 */
 	public ChainTree(String pdbId) {
-		this(new PDBParser(pdbId).backbone);
+		this(new PDBParser(pdbId).backboneAtomPositions);
 		
 		PDBParser parser = new PDBParser(pdbId); // we have to parse the file as java require that the first statement is a constructor
 												 // call and i don't want to make a static method.
-		this.alphaHelix = parser.alphaHelix;
-		this.betaSheet = parser.betaSheet;
-		this.heteroAtoms = parser.heteroAtoms;
+		this.helixes = parser.helixes;
+		this.sheets = parser.sheets;
 		this.primaryStructure = parser.primaryStructure;
 	}
 	
@@ -65,28 +64,17 @@ public class ChainTree {
 		// stuff to copy protein data
 		int i = 0;
 		for (ChainTree cTree : cTrees) {
-			int j = i + cTree.length();
 			
 			// copy secondary structure information
-			for (int k = i; k < j; k++) {
-				if (cTree.alphaHelix.contains(k-i)) {
-					this.alphaHelix.add(k);
-				}
+			for (Tuple2<Integer,Integer> helix : cTree.helixes) {
+				this.helixes.add(new Tuple2<Integer,Integer>(helix.x+i, helix.y+i));
 			}
 
-			for (int k = i; k < j; k++) {
-				if (cTree.betaSheet.contains(k-i)) {
-					this.betaSheet.add(k);
-				}
+			for (Tuple2<Integer,Integer> sheet : cTree.sheets) {
+				this.sheets.add(new Tuple2<Integer,Integer>(sheet.x+i, sheet.y+i));
 			}
 			
-			for (int k = i; k < j; k++) {
-				if (cTree.heteroAtoms.contains(k-i)) {
-					this.heteroAtoms.add(k);
-				}
-			}
-			
-			i = j;
+			i += cTree.length();
 		}
 	}
 	
@@ -176,10 +164,12 @@ public class ChainTree {
 	}
 	
 	/**
-	 * The length of the backbone.
+	 * The number of amino acids in the backbone.
+	 * 
+	 * @return Number of amino acids.
 	 */
 	public int length() {
-		return this.backboneBonds.length;
+		return (this.backboneBonds.length+1) / 3; // there are 3*n-1 bonds in a backbone of n amino acids
 	}
 	
 	/**
@@ -188,18 +178,21 @@ public class ChainTree {
 	 * @return The points of the atoms.
 	 */
 	public List<Point3D> getBackboneAtomPositions() {
-		return this.getBackboneAtomPositions(0, this.length()-1);
+		return this.getBackboneAtomPositions(1, this.length());
 	}
 
 	/**
 	 * Returns the absolute positions of the atoms in a subsegment of the protein backbone.
 	 *  
-	 * @param i The first bond of the segment.
-	 * @param j The last bond of the segment.
-	 * @require i <= j
+	 * @param start The first amino acid of the segment.
+	 * @param end The last amino acid of the segment.
+	 * @require start <= end
 	 * @return The points of the atoms in the segment.
 	 */
-	public List<Point3D> getBackboneAtomPositions(int i, int j) {
+	public List<Point3D> getBackboneAtomPositions(int start, int end) {
+		int i = this.getPhi(start);
+		int j = this.getPsi(end);
+		
 		TransformationMatrix transformationMatrix = new TransformationMatrix(this.worldTransformation);
 		
 		// if we aren't starting from the first bond then modify the transformation  
@@ -244,34 +237,23 @@ public class ChainTree {
 	/**
 	 * Returns a chain tree representing a sub chain of the backbone.
 	 * 
-	 * @param i The starting bond (included).
-	 * @param j The ending bond (included).
-	 * @require i <= j
-	 * @require Neither i nor j may split a amino acid.
+	 * @param i The starting amino acid (included).
+	 * @param j The ending amino acid (included).
+	 * @require start <= end
 	 */
-	public ChainTree getSubchain(int i, int j) {
-		if (i % 3 != 0 || j % 3 != 1) {
-			throw new IllegalArgumentException("You can't split an amino acid!");
-		}
-		
-		ChainTree cTree = new ChainTree(this.getBackboneAtomPositions(i, j));
+	public ChainTree getSubchain(int start, int end) {
+		ChainTree cTree = new ChainTree(this.getBackboneAtomPositions(start, end));
 		
 		// copy secondary structure information
-		for (int k = i; k <= j; k++) {
-			if (this.alphaHelix.contains(k)) {
-				cTree.alphaHelix.add(k-i);
+		for (Tuple2<Integer, Integer> helix : this.helixes) {
+			if (start <= helix.x && helix.x <= end || start <= helix.y && helix.y <= end) {
+				cTree.helixes.add(new Tuple2<Integer,Integer>(Math.max(start, helix.x)-start+1, Math.min(end, helix.y)-start+1));
 			}
 		}
 
-		for (int k = i; k <= j; k++) {
-			if (this.betaSheet.contains(k)) {
-				cTree.betaSheet.add(k-i);
-			}
-		}
-		
-		for (int k = i; k <= j; k++) {
-			if (this.heteroAtoms.contains(k)) {
-				cTree.heteroAtoms.add(k-i);
+		for (Tuple2<Integer, Integer> sheet : this.sheets) {
+			if (start <= sheet.x && sheet.x <= end || start <= sheet.y && sheet.y <= end) {
+				cTree.sheets.add(new Tuple2<Integer,Integer>(Math.max(start, sheet.x)-start+1, Math.min(end, sheet.y)-start+1));
 			}
 		}
 		
@@ -416,31 +398,31 @@ public class ChainTree {
 	}
 	
 	/**
-	 * Is the bond part of a alpha helix.
+	 * Is the amino acid part of a helix.
 	 * 
-	 * @param i The index of the bond.
+	 * @param i The sequence number of the amino acid.
 	 */
-	public boolean isInAlphaHelix(int i) {
-		return this.alphaHelix.contains(i);
+	public boolean isInHelix(int aminoAcid) {
+		for (Tuple2<Integer,Integer> helix : this.helixes) {
+			if (helix.x <= aminoAcid && aminoAcid <= helix.y)
+				return true;
+		}
+		
+		return false;
 	}
 	
 	/**
-	 * Is the bond part of a beta sheet.
+	 * Is the amino acid part of a sheet.
 	 * 
-	 * @param i The index of the bond.
+	 * @param i The sequence number of the amino acid.
 	 */
-	public boolean isInBetaSheet(int i) {
-		return this.betaSheet.contains(i);
-	}
-	
-	/**
-	 * Is the bond to the right of the a hetero atom.
-	 * 
-	 * @param i
-	 * @return
-	 */
-	public boolean isHeteroAtomBond(int i) {
-		return this.heteroAtoms.contains(i);
+	public boolean isInSheet(int aminoAcid) {
+		for (Tuple2<Integer,Integer> sheet : this.sheets) {
+			if (sheet.x <= aminoAcid && aminoAcid <= sheet.y)
+				return true;
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -665,12 +647,10 @@ public class ChainTree {
 		for (CTLeaf bond : this.backboneBonds) {
 			tmpString.append(bond);
 			
-			if (this.isInAlphaHelix(i)) {
+			if (this.isInHelix(i/3 + 1)) {
 				tmpString.append("(HELIX)");
-			} else if (this.isInBetaSheet(i)) {
+			} else if (this.isInSheet(i/3 + 1)) {
 				tmpString.append("(SHEET)");
-			} else if (this.isHeteroAtomBond(i)) {
-				tmpString.append("(HETERO)");
 			}
 			
 			i++;
@@ -682,6 +662,46 @@ public class ChainTree {
 		return tmpString.toString();
 	}
 	
+	
+	/**
+	 * The the phi bond from the amino acid.
+	 * 
+	 * @param aminoAcid The amino acid sequence number (1-indexed).
+	 * @return The index of the phi bond (0-indexed).
+	 */
+	public int getPhi(int aminoAcid) {
+		return aminoAcid * 3 - 3;
+	}
+
+	/**
+	 * The the psi bond from the amino acid.
+	 * 
+	 * @param aminoAcid The amino acid sequence number (1-indexed).
+	 * @return The index of the psi bond (0-indexed).
+	 */
+	public int getPsi(int aminoAcid) {
+		return aminoAcid * 3 - 2;
+	}
+
+	/**
+	 * The the omega bond from the amino acid.
+	 * 
+	 * @param aminoAcid The amino acid sequence number (1-indexed).
+	 * @return The index of the omega bond (0-indexed).
+	 */
+	public int getOmega(int aminoAcid) {
+		return aminoAcid * 3 - 1;
+	}
+	
+	/**
+	 * Get the sequence number of the alpha helix the bond is a part of. 
+	 * 
+	 * @param bond
+	 * @return
+	 */
+	public int getAminoAcid(int bond) {
+		return bond/3+1;
+	}
 	
 	/*
 	 * Static methods.
