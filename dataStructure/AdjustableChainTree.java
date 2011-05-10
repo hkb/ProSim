@@ -73,6 +73,7 @@ public class AdjustableChainTree extends ChainTree {
 		super(cTree.getBackboneAtomPositions());
 		
 		// copy secondary structure information
+		this.primaryStructure = cTree.primaryStructure;
 		this.helixes = cTree.helixes;
 		this.sheets = cTree.sheets;
 		

@@ -15,6 +15,7 @@ import math.Vector3D;
 import tool.BackboneSegmentAnalyser;
 import tool.ChainTreeScene;
 import tool.NeighborDependentRamachandranDistribution;
+import tool.NeighborIndependentRamachandranDistribution;
 import dataStructure.AdjustableChainTree;
 import dataStructure.ChainTree;
 
@@ -26,8 +27,9 @@ public class EndlessCCDLoopCloser {
 		String pdbId = "1SIS"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T, 1SIS, 1E2B
 		int segmentNo = 1;
 		boolean closeTheHelix = true;
-		double targetRMSDistance = 0.04;
-		int maxIterations = 10000;
+		double targetRMSDistance = 0.08;
+		int maxIterations = 5000;
+		
 
 		/*
 		 * Setup.
@@ -35,16 +37,19 @@ public class EndlessCCDLoopCloser {
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		cTree.rotate(3);
 		
+		//NeighborIndependentRamachandranDistribution nird = new NeighborIndependentRamachandranDistribution();
+		NeighborDependentRamachandranDistribution ndrd = new NeighborDependentRamachandranDistribution();
+
 		// find segment endpoints
 		int start;
 		int end;
 		if(closeTheHelix) {
-			Tuple2<Integer, Integer> segment1 = BackboneSegmentAnalyser.extractIntermediateSegments(cTree).get(segmentNo);
-			Tuple2<Integer, Integer> segment2 = BackboneSegmentAnalyser.extractIntermediateSegments(cTree).get(segmentNo+1);
+			Tuple2<Integer, Integer> segment1 = BackboneSegmentAnalyser.getIntermediateSegments(cTree).get(segmentNo);
+			Tuple2<Integer, Integer> segment2 = BackboneSegmentAnalyser.getIntermediateSegments(cTree).get(segmentNo+1);
 			start = segment1.x;
 			end = segment2.y;
 		} else {
-			Tuple2<Integer, Integer> segment = BackboneSegmentAnalyser.extractIntermediateSegments(cTree).get(segmentNo);
+			Tuple2<Integer, Integer> segment = BackboneSegmentAnalyser.getIntermediateSegments(cTree).get(segmentNo);
 			start = segment.x;
 			end = segment.y;
 		}
@@ -59,13 +64,13 @@ public class EndlessCCDLoopCloser {
 		// phi, psi angles
 		List<Double> dihedralAngles = new ArrayList<Double>();
 
-		int i = 0;
+		int k = 0;
 		for (double angle : cTree.getDihedralAngles()) {
-			if (angle != 0.0 && i % 3 != 2) {
+			if (angle != 0.0 && k % 3 != 2) {
 				dihedralAngles.add(angle);
 			}
 			
-			i++;
+			k++;
 		}
 		
 		// avoid false posetive self clash
@@ -96,28 +101,69 @@ public class EndlessCCDLoopCloser {
 		 * Close loop.
 		 */
 		int itt = 0;
+		int closes = 0;
+		double rejection = 0;
+		double accept = 0;
 		
 		while (true) {
-			for (int bond : rotateableBonds) {
-				double angle = anglePredictor.getRotationAngle(bond);
+			for (int i = 0, j = rotateableBonds.size(); i < j; i += 2) {
+				int bondPhi = rotateableBonds.get(i);
+				int bondPsi = rotateableBonds.get(i+1);
+				int aminoAcid = t1.getAminoAcid(bondPhi);
+				int leftNeighbour = aminoAcid-1;
+				int rightNeighbour = aminoAcid+1;
+				
+				List<Double> oldAngles = t1.getDihedralAngles(aminoAcid, aminoAcid);
+				double oldPhi = oldAngles.get(0);
+				double oldPsi = oldAngles.get(1);
+				//double oldP = nird.probability(t1.aminoAcidType(aminoAcid), oldPhi, oldPsi);
+				double oldP = ndrd.probability(t1.aminoAcidType(aminoAcid), t1.aminoAcidType(leftNeighbour), t1.aminoAcidType(rightNeighbour), oldPhi, oldPsi);
+				
+				double deltaPhi = anglePredictor.getRotationAngle(bondPhi);
+				t1.changeRotationAngle(bondPhi, deltaPhi);
+				
+				double deltaPsi = anglePredictor.getRotationAngle(bondPsi);
+				t1.changeRotationAngle(bondPsi, deltaPsi);
+				
+				List<Double> newAngles = t1.getDihedralAngles(aminoAcid, aminoAcid);
+				double newPhi = newAngles.get(0);
+				double newPsi = newAngles.get(1);
+				//double newP = nird.probability(t1.aminoAcidType(aminoAcid), newPhi, newPsi);
+				double newP = ndrd.probability(t1.aminoAcidType(aminoAcid), t1.aminoAcidType(leftNeighbour), t1.aminoAcidType(rightNeighbour), newPhi, newPsi);
+				
+				// discard new conformation?
+				if (Math.random() > newP / oldP) { 
+					t1.changeRotationAngle(bondPhi, -deltaPhi);
+					t1.changeRotationAngle(bondPsi, -deltaPsi);
+					
+					rejection++;
+					continue;
+				}
+				
+				accept++;
+				
+				
 
-				t1.changeRotationAngle(bond, angle);
-
-				scene.repaint(t1);
+				//scene.repaint(t1);
 
 				if (anglePredictor.targetRMSDistance() < targetRMSDistance) { 
 					System.out.println("Loop closed in " + itt + " iterations!");
+					closes++;
+					double rate = (rejection > 0) ? accept / rejection : 1;
+					System.out.println("Accept rate " + rate + " after " + closes + " closed loops.");
 					
 					if (t1.isClashing() || t1.areClashing(t2)) {
 						Thread.sleep(1);
 						System.err.println("Conformation is clashing!");
+					} else {
+						scene.repaint(t1);
 					}
 					
 					itt = 0;
-					Thread.sleep(500);
+					//Thread.sleep(500);
 					unfold(t1, t2, dihedralAngles, start, end);
-					scene.repaint(t1);
-					Thread.sleep(500);
+					
+					//Thread.sleep(500);
 				}	
 			}
 			
@@ -127,10 +173,11 @@ public class EndlessCCDLoopCloser {
 				System.err.println("TO MANY ITERATIONS!");
 				
 				itt = 0;
-				Thread.sleep(500);
+				//Thread.sleep(500);
+				//scene.repaint(t1);
 				unfold(t1, t2, dihedralAngles, start, end);
-				scene.repaint(t1);
-				Thread.sleep(500);
+				//scene.repaint(t1);
+				//Thread.sleep(500);
 			}
 		}
 	}

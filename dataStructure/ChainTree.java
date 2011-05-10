@@ -65,6 +65,9 @@ public class ChainTree {
 		int i = 0;
 		for (ChainTree cTree : cTrees) {
 			
+			// copy primary structure information
+			this.primaryStructure.addAll(cTree.primaryStructure);
+			
 			// copy secondary structure information
 			for (Tuple2<Integer,Integer> helix : cTree.helixes) {
 				this.helixes.add(new Tuple2<Integer,Integer>(helix.x+i, helix.y+i));
@@ -244,6 +247,11 @@ public class ChainTree {
 	public ChainTree getSubchain(int start, int end) {
 		ChainTree cTree = new ChainTree(this.getBackboneAtomPositions(start, end));
 		
+		// copy primary structure information
+		for (int i = start; i <= end; i++) {
+			cTree.primaryStructure.add(this.primaryStructure.get(i-1));
+		}
+		
 		// copy secondary structure information
 		for (Tuple2<Integer, Integer> helix : this.helixes) {
 			if (start <= helix.x && helix.x <= end || start <= helix.y && helix.y <= end) {
@@ -266,36 +274,50 @@ public class ChainTree {
 	 * @return The dihedral angles.
 	 */
 	public List<Double> getDihedralAngles() {
-		List<Point3D> points = this.getBackboneAtomPositions();
-		
+		return this.getDihedralAngles(1, this.length());
+	}
+	
+	public List<Double> getDihedralAngles(int start, int end) {
+		List<Point3D> points = this.getBackboneAtomPositions((start != 1) ? start-1 : start, 
+															 (end != this.length()) ? end+1 : end);
+
 		List<Double> dihedralAngles = new ArrayList<Double>();
 		
 		// first angle is zero
-		dihedralAngles.add(0.0);
-		
+		if(start == 1)
+			dihedralAngles.add(0.0);
+		 
 		// init computation
-		Point3D q = points.get(0);
-		Point3D r = points.get(1);
-		Point3D s = points.get(2);
+		int j = (end != this.length()) ? points.size()-2 : points.size();
+		int i = (start == 1) ? 3 : 5;
 		
-		Vector qr = new Vector(q.x-r.x, q.y-r.y, q.z-r.z);
-		Vector rs = new Vector(r.x-s.x, r.y-s.y, r.z-s.z);
-		Vector pq;
+		Vector3D p1 = points.get(i-3).asVector();
+		Vector3D p2 = points.get(i-2).asVector();
+		Vector3D p3 = points.get(i-1).asVector();
+		Vector3D p4;
+
+		Vector3D v1 = p1.vectorTo(p2);
+		Vector3D v2 = p2.vectorTo(p3);
 		
-		// compute all angles
-		for (int i = 1, j = points.size()-2; i < j; i++) {
-			q = r;
-			r = s;
-			pq = qr;
-			qr = rs;
-			s = points.get(i+2);
-			rs = new Vector(r.x-s.x, r.y-s.y, r.z-s.z);
+		// compute all angles			
+		for (; i < j; i++) {
+			p4 = points.get(i).asVector();
+			Vector3D v3 = p3.vectorTo(p4);			
 			
-			dihedralAngles.add((double) Vector.dihedralAngle(pq, qr, rs));
+			// TODO why is the cross product in the wrong direction?
+			double a = v2.length() * v1.dot(v2.cross(v3));
+			double b = v1.cross(v2).dot(v2.cross(v3));
+			
+			dihedralAngles.add(Math.atan2(a,b));
+			
+			p3 = p4;
+			v1 = v2;
+			v2 = v3;
 		}
 
 		// last angle is zero
-		dihedralAngles.add(0.0);
+		if(end == this.length())
+			dihedralAngles.add(0.0);
 		
 		return dihedralAngles;
 	}
@@ -701,6 +723,10 @@ public class ChainTree {
 	 */
 	public int getAminoAcid(int bond) {
 		return bond/3+1;
+	}
+	
+	public AminoAcid.Type aminoAcidType(int aminoAcid) {
+		return this.primaryStructure.get(aminoAcid-1);
 	}
 	
 	/*

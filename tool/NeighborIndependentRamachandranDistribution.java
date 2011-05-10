@@ -2,16 +2,24 @@ package tool;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.util.List;
+
+import math.Tuple2;
 
 import chemestry.AminoAcid;
+import dataStructure.ChainTree;
 
 public class NeighborIndependentRamachandranDistribution {
 
-	Double[][][] probebilities = new Double[AminoAcid.count][360/5][360/5];
+	private static int BIN_SIZE = 5;
+	
+	Double[][][] probabilities = new Double[AminoAcid.count][360/BIN_SIZE][360/BIN_SIZE];
 
 	public NeighborIndependentRamachandranDistribution() throws Exception {
+
 		//try{
 			FileInputStream fstream = new FileInputStream("/home/hkb/data/bachelor/Neighbor-dependent Ramachandran Distributions/NDRD_TCBIG.txt");
 			DataInputStream in = new DataInputStream(fstream);
@@ -31,7 +39,7 @@ public class NeighborIndependentRamachandranDistribution {
 					int psi = Integer.valueOf(tokens[4]);
 					double probability = Double.valueOf(tokens[5]);
 
-					this.probebilities[AminoAcid.typeToInt(aminoAcid)][(phi + 180)/5][(psi + 180)/5] = probability;
+					this.probabilities[AminoAcid.typeToInt(aminoAcid)][(phi + 180)/5][(psi + 180)/5] = probability;
 				}
 			}
 			
@@ -40,12 +48,17 @@ public class NeighborIndependentRamachandranDistribution {
 			System.err.println("Error: " + e.getMessage());
 		}*/
 	}
+	
 
-	public double probability(AminoAcid.Type aminoAcid, double phi, double psi) {
-		return this.probebilities[AminoAcid.typeToInt(aminoAcid)][this.toBin(phi)][this.toBin(psi)];
+	public double probability(AminoAcid.Type aminoAcid, double phi, double psi) {		
+		return this.probabilities[AminoAcid.typeToInt(aminoAcid)][this.toBin(this.radianToDegree(phi))][this.toBin(this.radianToDegree(psi))];
+	}
+	
+	public static double radianToDegree(double radian) {
+		return radian * (180 / Math.PI);
 	}
 	
 	private int toBin(double angle) {
-		return (int) (angle + 180)/5;
+		return (int) (angle + 180)/BIN_SIZE;
 	}
 }

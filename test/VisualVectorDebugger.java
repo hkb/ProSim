@@ -23,6 +23,12 @@ public class VisualVectorDebugger {
 		scene.addShape(new Cylinder3d(new Point3d(), vectorToPoint(d), 0.1f), Color.BLUE);
 		scene.addShape(new Cylinder3d(new Point3d(), vectorToPoint(e), 0.2f), new Color(255, 255, 0, 100));
 		
+		scene.addText("a", vectorToPoint(a));
+		scene.addText("b", vectorToPoint(b));
+		scene.addText("c", vectorToPoint(c));
+		scene.addText("d", vectorToPoint(d.add(c.scale(0.1))));
+		scene.addText("e", vectorToPoint(e.add(c.scale(0.1))));
+		
 		scene.addShape(new Cylinder3d(vectorToPoint(c), vectorToPoint(e), 0.01f));
 	}
 	

@@ -43,7 +43,7 @@ public class CyclicCoordinateDescent {
 		
 		int i = 0;
 		for (Point3D position : target.getBackboneAtomPositions()) {
-			this.target[i] = new Vector3D(position);
+			this.target[i] = position.asVector();
 			
 			i++;
 		}

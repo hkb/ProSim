@@ -12,8 +12,16 @@ import math.Tuple2;
 import dataStructure.ChainTree;
 
 public class BackboneSegmentAnalyser {
+	
+	public static List<Tuple2<Integer, Integer>> getHelixSegments(ChainTree cTree) {
+		return cTree.helixes;
+	}
+	
+	public static List<Tuple2<Integer, Integer>> getSheetSegments(ChainTree cTree) {
+		return cTree.sheets;
+	}	
 
-	public static List<Tuple2<Integer, Integer>> extractIntermediateSegments(ChainTree cTree) {
+	public static List<Tuple2<Integer, Integer>> getIntermediateSegments(ChainTree cTree) {
 		List<Tuple2<Integer, Integer>> secondaryStructures = new ArrayList<Tuple2<Integer, Integer>>();
 		
 		secondaryStructures.addAll(cTree.helixes);

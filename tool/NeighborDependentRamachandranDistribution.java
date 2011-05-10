@@ -45,7 +45,18 @@ public class NeighborDependentRamachandranDistribution {
 		}*/
 	}
 	
-	public double probability(AminoAcid.Type aminoAdid, AminoAcid.Type leftNeighbour, AminoAcid.Type rightNeighbour, double phi, double psi) {
-		return 0.0;
+	public double probability(AminoAcid.Type aminoAcid, AminoAcid.Type leftNeighbour, AminoAcid.Type rightNeighbour, double phi, double psi) {
+		double left = this.leftNeightbour[AminoAcid.typeToInt(aminoAcid)][AminoAcid.typeToInt(leftNeighbour)][this.toBin(this.radianToDegree(phi))][this.toBin(this.radianToDegree(psi))];
+		double right = this.leftNeightbour[AminoAcid.typeToInt(aminoAcid)][AminoAcid.typeToInt(rightNeighbour)][this.toBin(this.radianToDegree(phi))][this.toBin(this.radianToDegree(psi))];
+		
+		return (left + right) / 2;
+	}
+	
+	private double radianToDegree(double radian) {
+		return radian * (180 / Math.PI);
+	}
+	
+	private int toBin(double angle) {
+		return (int) (angle + 180)/5;
 	}
 }
