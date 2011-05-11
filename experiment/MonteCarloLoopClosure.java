@@ -32,7 +32,7 @@ public class MonteCarloLoopClosure {
 		 */
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		
-		Tuple2<Integer, Integer> segment = BackboneSegmentAnalyser.extractIntermediateSegments(cTree).get(segmentNo);
+		Tuple2<Integer, Integer> segment = BackboneSegmentAnalyser.getIntermediateSegments(cTree).get(segmentNo);
 		int start = segment.x;
 		int end = segment.y;
 

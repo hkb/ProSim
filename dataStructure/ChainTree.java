@@ -198,7 +198,7 @@ public class ChainTree {
 		
 		TransformationMatrix transformationMatrix = new TransformationMatrix(this.worldTransformation);
 		
-		// if we aren't starting from the first bond then modify the transformation  
+		// if we aren't starting from the first bond then modify the transformation 
 		if (i > 0) {
 			transformationMatrix.multR(this.getTransformationMatrix(0, i));
 		}

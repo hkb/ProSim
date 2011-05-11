@@ -36,9 +36,6 @@ public class EndlessCCDLoopCloser {
 		 */
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		cTree.rotate(3);
-		
-		//NeighborIndependentRamachandranDistribution nird = new NeighborIndependentRamachandranDistribution();
-		NeighborDependentRamachandranDistribution ndrd = new NeighborDependentRamachandranDistribution();
 
 		// find segment endpoints
 		int start;

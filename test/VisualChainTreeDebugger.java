@@ -20,7 +20,7 @@ public class VisualChainTreeDebugger {
 		//File[] listOfFiles = new File("/home/hkb/workspace/ProSim/pdb_files").listFiles();
 		//String pdbId = listOfFiles[(int)(Math.random() * listOfFiles.length)].getName().substring(0,4);
 		//System.out.println(pdbId);
-		String pdbId = "1SIS";
+		String pdbId = "1PUX";
 		
 		
 		//

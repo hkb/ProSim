@@ -2,6 +2,7 @@ package tool;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.vecmath.Point2i;
@@ -18,7 +19,17 @@ public class BackboneSegmentAnalyser {
 	}
 	
 	public static List<Tuple2<Integer, Integer>> getSheetSegments(ChainTree cTree) {
-		return cTree.sheets;
+		List<Tuple2<Integer, Integer>> sortedSheets = new ArrayList<Tuple2<Integer, Integer>>();
+		
+		for (Tuple2<Integer, Integer> sheet : cTree.sheets) {
+			int i = 0;
+			while (i < sortedSheets.size() && sortedSheets.get(i).x < sheet.x) {
+				i++;
+			}
+			
+			sortedSheets.add(i, sheet);
+		}
+		return sortedSheets;
 	}	
 
 	public static List<Tuple2<Integer, Integer>> getIntermediateSegments(ChainTree cTree) {
@@ -41,8 +52,7 @@ public class BackboneSegmentAnalyser {
 		starts.add(cTree.length());
 		List<Tuple2<Integer, Integer>> intermediateSegments = new ArrayList<Tuple2<Integer, Integer>>();
 		
-		intermediateSegments.add(new Tuple2<Integer, Integer>(1, starts.get(0)));
-		for (int i = 0, j = ends.size(); i < j; i++) {
+		for (int i = 0, j = ends.size()-1; i < j; i++) {
 			intermediateSegments.add(new Tuple2<Integer, Integer>(ends.get(i)+1, starts.get(i+1)-1));
 		}
 		
