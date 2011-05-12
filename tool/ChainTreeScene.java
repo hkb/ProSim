@@ -144,6 +144,30 @@ public class ChainTreeScene {
 	}
 	
 	/**
+	 * Removes the given tree from the scene.
+	 * 
+	 * @param cTree The tree to remove.
+	 */
+	public void remove(ChainTree cTree) {
+		if(this.cTrees.containsKey(cTree)) {
+			// remove nodes
+			for(GUINode node : this.cTrees.get(cTree)) {
+				try {
+					this.scene.removeShape(node.sphere);
+					this.scene.removeShape(node.cylinder);
+				} catch (Exception e) {
+					//System.err.println(e);
+				}
+			}
+			
+			// remove tree
+			this.cTrees.remove(cTree);
+		} else {
+			throw new IllegalArgumentException("Unknown chain tree!");
+		}
+	}
+	
+	/**
 	 * 
 	 * @param start
 	 * @param end
@@ -156,6 +180,13 @@ public class ChainTreeScene {
 	
 	public void addSphere(Vector3D center, float radius, Color color) {
 		this.scene.addShape(new Sphere3d(vector3DToPoint3d(center), radius), color);
+	}
+	
+	/**
+	 * Clears the scene from all objects.
+	 */
+	public void clear() {
+		this.scene.removeAllShapes();
 	}
 	
 	/**

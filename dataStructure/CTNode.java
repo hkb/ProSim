@@ -2,6 +2,7 @@ package dataStructure;
 
 import math.matrix.TransformationMatrix;
 import boundingVolume.BoundingVolume;
+import boundingVolume.LinesegmentSweptSphere;
 
 public class CTNode {
 	
@@ -86,8 +87,23 @@ public class CTNode {
 		// transformation matrix
 		this.transformationMatrix = new TransformationMatrix(this.left.transformationMatrix, this.right.transformationMatrix);
 
+		
 		// bounding volume
 		this.boundingVolume = this.left.boundingVolume.combine(this.right.boundingVolume.transform(this.left.transformationMatrix));
+		
+		LinesegmentSweptSphere vol = (LinesegmentSweptSphere) this.boundingVolume;
+		if(Float.isNaN(vol.volume.p1.x()) || Float.isNaN(vol.volume.p1.y()) || Float.isNaN(vol.volume.p1.z()) ||
+		   Float.isNaN(vol.volume.p2.x()) || Float.isNaN(vol.volume.p2.y()) || Float.isNaN(vol.volume.p2.z())) {
+			System.out.println(this.left.boundingVolume);
+			System.out.println(this.right.boundingVolume);
+			System.out.println(this.boundingVolume);
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	@Override

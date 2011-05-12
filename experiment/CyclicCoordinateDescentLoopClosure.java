@@ -25,7 +25,10 @@ public class CyclicCoordinateDescentLoopClosure {
 	
 	private static enum Restriction {NONE, NEIGHBOUR_INDEPENDENT, NEIGHBOUR_DEPENDENT};
 	private static RamachandranDistribution ramachandranDistribution = new RamachandranDistribution();
+	
+	
 	private static ChainTreeScene scene = new ChainTreeScene();
+	private static boolean GUI = true;
 	
 	public static void main(String[] args) throws Exception {
 		/*
@@ -37,7 +40,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		Restriction restriction = Restriction.NONE;
 		double targetRMSDistance = 0.08;
 		int maxIterationsPerClose = 5000;
-		int numberOfClosedLoops = 100;
+		int numberOfClosedLoops = 10;
 		
 		
 		
@@ -45,7 +48,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		/*
 		 * Run experiments.
 		 */
-		closeAllSheetLoops(pdbId, restriction, targetRMSDistance, maxIterationsPerClose, numberOfClosedLoops);
+		closeAllLoops(pdbId, restriction, targetRMSDistance, maxIterationsPerClose, numberOfClosedLoops);
 		
 		
 	}
@@ -54,7 +57,9 @@ public class CyclicCoordinateDescentLoopClosure {
 		ChainTree cTree = new ChainTree(pdbId);
 		List<Tuple2<Integer, Integer>> segments = BackboneSegmentAnalyser.getSheetSegments(cTree);
 		
-		for(int i = 0; i < segments.size()-1; i += 2) {
+		System.out.println(segments);
+		
+		for(int i = 0; i < segments.size()-1; i++) {
 			Tuple2<Integer, Integer> sheet1 = segments.get(i);
 			Tuple2<Integer, Integer> sheet2 = segments.get(i+1);
 			
@@ -62,7 +67,7 @@ public class CyclicCoordinateDescentLoopClosure {
 			
 			if(sheet2.x - sheet1.y >= 4) {
 				System.out.println("Closing " + new Tuple2(sheet1.y, sheet2.x));
-				closeLoop(pdbId, i, i+1, restriction, targetRMSDistance, maxIterationsPerClose, numberOfClosedLoops);
+				closeLoop(pdbId, sheet1.y, sheet2.x, restriction, targetRMSDistance, maxIterationsPerClose, numberOfClosedLoops);
 			}
 		}
 	}
@@ -71,27 +76,26 @@ public class CyclicCoordinateDescentLoopClosure {
 		ChainTree cTree = new ChainTree(pdbId);
 		List<Tuple2<Integer, Integer>> segments = BackboneSegmentAnalyser.getIntermediateSegments(cTree);
 		
+		scene.add(cTree,20);
+		
 		for(int i = 0; i < segments.size(); i++) {
 			Tuple2<Integer, Integer> segment = segments.get(i);
 			
 			if(segment.y - segment.x >= 4) {
 				System.out.println("Closing " + segment);
-				closeLoop(pdbId, i, i, restriction, targetRMSDistance, maxIterationsPerClose, numberOfClosedLoops);
+				closeLoop(pdbId, segment.x, segment.y, restriction, targetRMSDistance, maxIterationsPerClose, numberOfClosedLoops);
 			}
 		}
 	}
 
 
-	private static Tuple3<Collection<Double>, Integer, Integer> closeLoop(String pdbId, int startSegment, int endSegment, Restriction restriction, double targetRMSDistance, int maxIterationsPerClose, int numberOfClosedLoops) {
+	private static Tuple3<Collection<Double>, Integer, Integer> closeLoop(String pdbId, int start, int end, Restriction restriction, double targetRMSDistance, int maxIterationsPerClose, int numberOfClosedLoops) {
 		// setup chain trees
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
-		Tuple2<Integer, Integer> segment1 = BackboneSegmentAnalyser.getIntermediateSegments(cTree).get(startSegment);
-		Tuple2<Integer, Integer> segment2 = BackboneSegmentAnalyser.getIntermediateSegments(cTree).get(endSegment);
-		int start = segment1.x;
-		int end = segment2.y;
 		
-		AdjustableChainTree cTreeLoop = cTree.getSubchain(1, end+1);
-		AdjustableChainTree cTreeRemainder = cTree.getSubchain(end+2, cTree.length());
+		AdjustableChainTree cTreeLoop = cTree.getSubchain(1, end);
+		AdjustableChainTree cTreeRemainder = cTree.getSubchain(end+1, cTree.length());
+
 		
 		// compute energy
 		EnergyFunction energyFunction = new LoopAtomDistance(cTreeLoop, start, end);
@@ -124,12 +128,13 @@ public class CyclicCoordinateDescentLoopClosure {
 		CyclicCoordinateDescent anglePredictor = new CyclicCoordinateDescent(cTreeLoop, cTreeLoop.getSubchain(cTreeLoop.length(), cTreeLoop.length()));
 		
 		// GUI
-		scene.scene.removeAllShapes();
-		scene.add(cTreeLoop);
-		scene.add(cTreeRemainder);
-		scene.add(cTree.getSubchain(start-1, end+1), 20);
-		scene.scene.centerCamera();
-		scene.scene.autoZoom();
+		ChainTree guiLoop = null;
+		if(GUI) {
+			guiLoop = cTree.getSubchain(start-1, end+1);
+			scene.add(guiLoop);
+			scene.scene.centerCamera();
+			scene.scene.autoZoom();
+		}
 		
 		/*
 		 * Close loops.
@@ -217,7 +222,15 @@ public class CyclicCoordinateDescentLoopClosure {
 					
 					if(energy < minEnergy) {
 						System.out.println("New conformation "+energies.size()+": " + energy);
-						scene.repaint(cTreeLoop);
+						
+						if(GUI) {
+							scene.remove(guiLoop);
+							guiLoop = cTree.getSubchain(start-1, end+1);
+							scene.add(guiLoop);
+							scene.scene.centerCamera();
+							scene.scene.autoZoom();
+						}
+						
 						
 						minEnergy = energy;
 					}
