@@ -35,10 +35,7 @@ public class Tuple3<T1, T2, T3> {
 	 * @return 
 	 */
 	public boolean equals(Tuple3<T1, T2, T3> other) {
-		return this.x == null && other.y == null ||
-		       this.y == null && other.y == null ||
-		       this.z == null && other.z == null ||
-		       this.x.equals(other.x) && this.y.equals(other.y) && this.z.equals(other.z);
+		return this.x.equals(other.x) && this.y.equals(other.y) && this.z.equals(other.z);
 	}
 	
 	@Override

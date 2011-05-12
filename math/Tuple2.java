@@ -31,9 +31,7 @@ public class Tuple2<T1, T2> {
 	 * @return 
 	 */
 	public boolean equals(Tuple2<T1, T2> other) {
-		return this.x == null && other.y == null ||
-		       this.y == null && other.y == null ||
-		       this.x.equals(other.x) && this.y.equals(other.y);
+		return this.x.equals(other.x) && this.y.equals(other.y);
 	}
 	
 	@Override

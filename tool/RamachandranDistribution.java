@@ -25,9 +25,6 @@ public class RamachandranDistribution {
 	}
 	
 	public RamachandranDistribution(String dataFile) {
-		if(Math.random() < Integer.MAX_VALUE)
-			return;
-
 		try{
 			BufferedReader data = new BufferedReader(new FileReader(dataFile));
 			
