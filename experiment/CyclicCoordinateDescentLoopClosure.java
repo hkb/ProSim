@@ -35,22 +35,24 @@ import energyFunction.LoopAtomDistance;
 
 public class CyclicCoordinateDescentLoopClosure {
 	
-	private static enum Restriction {NONE, NEIGHBOUR_INDEPENDENT, NEIGHBOUR_DEPENDENT};
-	private static enum Mode {QUALITY, QUANTITY};
+	private static enum FoldingRestriction {NONE, NEIGHBOUR_INDEPENDENT, NEIGHBOUR_DEPENDENT};
+	private static enum UnfoldingRestriction {NONE, NATURAL};
 	private static RamachandranDistribution ramachandranDistribution = new RamachandranDistribution();
-	private static ChainTreeScene scene = new ChainTreeScene();
+	private static ChainTreeScene scene = null;//new ChainTreeScene();
 	private static Profiler profiler = new Profiler();
 	private static Writer output;
 
 	/*
 	 * Configuration.
 	 */
-	private static String[] pdbIds = {"1PUX","1T0G","1E2B","2J3L","1M4J","1K7C","2YS4","1QDD","1O26","2OV0","1TI8","1UW0","1Z0J","1SPK","2CSK","2G1E","1VZI","2DNE","1X45"}; 
+	private static String[] pdbIds = {"1PUX","1T0G","1E2B","2J3L","1M4J","1K7C","2YS4","1QDD","1O26","2OV0","1TI8","1UW0","1Z0J","1SPK","2CSK","2G1E","1VZI",
+									  "2DNE","1X45","1TRE","2DAO","1H6X","1AYJ","1YO4","2OV0","2E2F","1WGV","2H41","2A7R","2BYE"};
+	private static String[] sheetDominantPDBs = {"1PUX","1TRE"};
 	private static double TARGET_RMSD = 0.08;
 	private static int MAX_ITERATIONS_PER_CLOSE = 5000;
 	private static int NUMBER_OF_TRIAL_LOOPS = 100;
 	
-	private static int NUMBER_OF_CONCURRENT_THREADS = 2;
+	private static int NUMBER_OF_CONCURRENT_THREADS = 1;
 	
 	public static void main(String[] args) throws Exception {
 		
@@ -83,7 +85,7 @@ public class CyclicCoordinateDescentLoopClosure {
 			Thread[] threads = new Thread[NUMBER_OF_CONCURRENT_THREADS];
 			
 			for(int k = 0; k < NUMBER_OF_CONCURRENT_THREADS && i+k < pdbIds.length; k++) {
-				System.out.println("starting thread");
+				System.out.println("starting thread for: " + pdbIds[i+k]);
 				threads[k] = new Thread(new ProteinFolder(pdbIds[i+k]));
 				threads[k].start();
 			}
@@ -98,10 +100,10 @@ public class CyclicCoordinateDescentLoopClosure {
 		System.out.println("TOTALLY DONE!");
 	}
 	
-	private static Collection<Tuple2<Tuple2<Integer,Integer>,Tuple3<Collection<Double>, Integer, Integer>>> closeAllSheetLoops (String pdbId) {
+	private static void closeAllSheetLoops (String pdbId) {
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		List<Tuple2<Integer, Integer>> segments = cTree.getSheetSegments();
-				
+		/*		
 		scene.add(cTree.getSubchain(1, segments.get(0).x));
 		for(Tuple2<Integer, Integer> segment : segments) {
 			scene.add(cTree.getSubchain(segment.x, segment.y));
@@ -109,28 +111,24 @@ public class CyclicCoordinateDescentLoopClosure {
 		scene.add(cTree.getSubchain(segments.get(segments.size()-1).y, cTree.length()));
 		scene.scene.centerCamera();
 		scene.scene.autoZoom();
-		
-		Collection<Tuple2<Tuple2<Integer,Integer>,Tuple3<Collection<Double>, Integer, Integer>>> results = new LinkedList<Tuple2<Tuple2<Integer,Integer>,Tuple3<Collection<Double>, Integer, Integer>>>();
+		*/
 		
 		for(int i = 0; i < segments.size()-1; i++) {
 			Tuple2<Integer, Integer> sheet1 = segments.get(i);
 			Tuple2<Integer, Integer> sheet2 = segments.get(i+1);
 						
-			if(sheet2.x - sheet1.y >= 4) {
-				results.add(new Tuple2<Tuple2<Integer,Integer>,Tuple3<Collection<Double>, Integer, Integer>>(new Tuple2<Integer,Integer>(sheet1.y+1, sheet2.x-1), closeLoop(pdbId, cTree, sheet1.y+1, sheet2.x-1)));
+			if(sheet2.x - sheet1.y >= 3) { // min 4 residues long
+				closeLoop(pdbId, cTree, sheet1.y+1, sheet2.x-1);
 			}
 		}
 		
-		scene.remove(cTree);
-
-		return results;
+		//scene.remove(cTree);
 	}
 	
-	private static Collection<Tuple2<Tuple2<Integer,Integer>,Tuple3<Collection<Double>, Integer, Integer>>> closeAllLoops(String pdbId) {
+	private static void closeAllLoops(String pdbId) {
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		List<Tuple2<Integer, Integer>> segments = cTree.getIntermediateSegments();
-
-		cTree.move(new Vector3D(Math.random(), Math.random(), Math.random()).scale(100));
+		/*
 		scene.add(cTree.getSubchain(segments.get(0).x, segments.get(0).y+1));
 		
 		for(int i = 0; i < segments.size()-1; i++) {
@@ -143,24 +141,22 @@ public class CyclicCoordinateDescentLoopClosure {
 		scene.add(cTree.getSubchain(segments.get(segments.size()-1).x-1, segments.get(segments.size()-1).y));
 		scene.scene.centerCamera();
 		scene.scene.autoZoom();
+		*/
 		
-		Collection<Tuple2<Tuple2<Integer,Integer>,Tuple3<Collection<Double>, Integer, Integer>>> results = new LinkedList<Tuple2<Tuple2<Integer,Integer>,Tuple3<Collection<Double>, Integer, Integer>>>();
-		
-		for(int i = 1; i < segments.size()-1; i++) {
+		for(int i = 1; i < segments.size()-1; i++) { // min 4 residues long
 			Tuple2<Integer, Integer> segment = segments.get(i);
 			
-			if(segment.y - segment.x >= 4) {	
-				results.add(new Tuple2<Tuple2<Integer,Integer>,Tuple3<Collection<Double>, Integer, Integer>>(segment, closeLoop(pdbId, cTree, segment.x, segment.y)));
+			if(segment.y - segment.x >= 3) {	
+				closeLoop(pdbId, cTree, segment.x, segment.y);
 			}
 		}
 		
-		scene.remove(cTree);
+		//scene.remove(cTree);
 
-		return results;
 	}
 
 
-	private static Tuple3<Collection<Double>, Integer, Integer> closeLoop(String pdbId, AdjustableChainTree cTree, int start, int end) {
+	private static void closeLoop(String pdbId, AdjustableChainTree cTree, int start, int end) {
 		// setup chain trees
 		AdjustableChainTree cTreeLoop = cTree.getSubchain(1, end+1);
 		AdjustableChainTree cTreeRemainder = cTree.getSubchain(end+2, cTree.length());
@@ -205,10 +201,10 @@ public class CyclicCoordinateDescentLoopClosure {
 		// generate unfold conformations
 		AdjustableChainTree cTreeLoopCopy = cTreeLoop.getSubchain(1, cTreeLoop.length());
 		
-		for(int n = 0; n < 10; n++) {
-			Collection<Collection<Tuple2<Integer,Double>>> conformations = generateConformations(cTreeLoopCopy, cTreeRemainder, dihedralAngles, start, end);
+		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.NATURAL}) {
+			Collection<Collection<Tuple2<Integer,Double>>> conformations = generateConformations(cTreeLoopCopy, cTreeRemainder, dihedralAngles, start, end, unfolding);
 			
-			for(Restriction restriction : new Restriction[]{Restriction.NONE, Restriction.NEIGHBOUR_INDEPENDENT, Restriction.NEIGHBOUR_DEPENDENT}) {
+			for(FoldingRestriction restriction : new FoldingRestriction[]{FoldingRestriction.NONE, FoldingRestriction.NEIGHBOUR_INDEPENDENT, FoldingRestriction.NEIGHBOUR_DEPENDENT}) {
 				int itterations = 0;
 				int unclosed = 0;
 				int clashes = 0;
@@ -226,7 +222,7 @@ public class CyclicCoordinateDescentLoopClosure {
 							int bondPsi = rotateableBonds.get(i+1);
 							int aminoAcid = cTreeLoop.getAminoAcid(bondPhi);
 							
-							if(restriction == Restriction.NONE) {
+							if(restriction == FoldingRestriction.NONE) {
 								// compute new phi, psi angle angles
 								double deltaPhi = anglePredictor.getRotationAngle(bondPhi);
 								cTreeLoop.changeRotationAngle(bondPhi, deltaPhi);
@@ -290,12 +286,12 @@ public class CyclicCoordinateDescentLoopClosure {
 								energies.add(energy);
 								
 								if(energy < minEnergy) {
-									
+									/*
 									if(guiLoop != null)
 										scene.remove(guiLoop);
 										guiLoop = cTreeLoop.getSubchain(start-1, end+1);
 										scene.add(guiLoop);						
-									
+									*/
 									minEnergy = energy;
 								}
 							}
@@ -311,15 +307,13 @@ public class CyclicCoordinateDescentLoopClosure {
 					}
 				}
 				
-				log(pdbId + "\t" + start + "\t" + end + "\t" + restriction + "\t" + clashes + "\t" +unclosed+"\t"+energies);				
-				System.out.println(pdbId + " " + start + "-" + end + " " + restriction + ": " + clashes + " " +unclosed+" "+minEnergy);
+				log(pdbId + "\t" + start + "\t" + end + "\t" + unfolding + "\t" + restriction + "\t" + clashes + "\t" +unclosed+"\t"+energies);				
+				System.out.println(pdbId + " " + start + "-" + end + " " + unfolding+ " " + restriction + ": " + clashes + " " +unclosed+" "+minEnergy);
 			}
 		}
-
-		return new Tuple3<Collection<Double>, Integer, Integer>(new LinkedList(), 0, 0);
 	}
 	
-	private static Collection<Tuple2<Integer,Double>> unfold(AdjustableChainTree cTree, AdjustableChainTree other, List<Double> angles, int start, int end) {
+	private static Collection<Tuple2<Integer,Double>> unfoldNatural(AdjustableChainTree cTree, AdjustableChainTree other, List<Double> angles, int start, int end) {
 		int startBond = cTree.getPhi(start);
 		int endBond = cTree.getPsi(end);
 		
@@ -331,9 +325,12 @@ public class CyclicCoordinateDescentLoopClosure {
 			for (int bond : cTree.rotatableBonds()) {
 				if (startBond <= bond && bond <= endBond) {
 					double angle = angles.get((int) (Math.random() * angles.size()));
-					cTree.changeRotationAngle(bond, angle);	
 					
-					conformation.add(new Tuple2<Integer,Double>(bond, angle));
+					List<Double> currentAngles = cTree.getDihedralAngles(cTree.getAminoAcid(bond), cTree.getAminoAcid(bond));
+					double currentAngle = currentAngles.get((bond % 3 == 0) ? 0 : 1);
+					cTree.changeRotationAngle(bond, currentAngle-angle);
+					
+					conformation.add(new Tuple2<Integer,Double>(bond, currentAngle-angle));
 				}
 			}
 		} while (cTree.isClashing() || cTree.areClashing(other));
@@ -341,11 +338,30 @@ public class CyclicCoordinateDescentLoopClosure {
 		return conformation;
 	}
 	
-	private static Collection<Collection<Tuple2<Integer,Double>>> generateConformations(AdjustableChainTree cTree, AdjustableChainTree other, List<Double> angles, int start, int end) {
+	private static Collection<Tuple2<Integer,Double>> unfoldRandom(AdjustableChainTree cTree, int start, int end) {
+		int startBond = cTree.getPhi(start);
+		int endBond = cTree.getPsi(end);
+		
+		Collection<Tuple2<Integer,Double>> conformation = new LinkedList<Tuple2<Integer,Double>>();
+			
+		for (int bond : cTree.rotatableBonds()) {
+			if (startBond <= bond && bond <= endBond) {
+				conformation.add(new Tuple2<Integer,Double>(bond, Math.random()*Math.PI*2));
+			}
+		}
+
+		return conformation;
+	}
+	
+	private static Collection<Collection<Tuple2<Integer,Double>>> generateConformations(AdjustableChainTree cTree, AdjustableChainTree other, List<Double> angles, int start, int end, UnfoldingRestriction restriction) {
 		List<Collection<Tuple2<Integer,Double>>> conformations = new ArrayList<Collection<Tuple2<Integer,Double>>>();
 		
 		for(int i = 0; i < NUMBER_OF_TRIAL_LOOPS; i++) {
-			conformations.add(unfold(cTree, other, angles, start, end));
+			if(restriction == UnfoldingRestriction.NATURAL) {
+				conformations.add(unfoldNatural(cTree, other, angles, start, end));
+			} else {
+				conformations.add(unfoldRandom(cTree, start, end));
+			}
 		}
 		
 		return conformations;
