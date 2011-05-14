@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
@@ -12,19 +13,21 @@ import java.util.StringTokenizer;
 import javax.vecmath.Point3d;
 
 import chemestry.AminoAcid;
+import chemestry.AminoAcid.SecondaryStructure;
+import chemestry.AminoAcid.Type;
 
 import math.Point3D;
 import math.Tuple2;
 
 public class PDBParser {
 	
-	public List<AminoAcid.Type> primaryStructure = new ArrayList<AminoAcid.Type>();
+	public List<Tuple2<Type,SecondaryStructure>> proteinInformation = new ArrayList<Tuple2<Type,SecondaryStructure>>();
 	public List<Point3D> backboneAtomPositions = new ArrayList<Point3D>();
-	public List<Tuple2<Integer, Integer>> helixes = new ArrayList<Tuple2<Integer, Integer>>();
-	public List<Tuple2<Integer, Integer>> sheets = new ArrayList<Tuple2<Integer, Integer>>();
-	public Set<Integer> heteroAtoms = new HashSet<Integer>();
-	
+		
 	// small state variables
+	private List<Tuple2<Integer, Integer>> helixes = new LinkedList<Tuple2<Integer, Integer>>();
+	private List<Tuple2<Integer, Integer>> sheets = new LinkedList<Tuple2<Integer, Integer>>();
+	
 	private boolean endOfBackbone;
 	private int atomCount;
 	
@@ -48,8 +51,6 @@ public class PDBParser {
 				if (type.equals("ATOM")) {
 					parseAtom(record);
 					parsePrimaryStructure(record);
-				} else if (type.equals("HETATM")) {
-					//parseHeteroAtom(record);
 				} else if (type.equals("HELIX")) {
 					parseHelix(record);
 				} else if (type.equals("SHEET")) {
@@ -58,6 +59,26 @@ public class PDBParser {
 					parseTer(record);
 				}
 			}
+			
+			// generate secondary structure information
+			for(Tuple2<Integer, Integer> helix : this.helixes) {
+				if(helix.y < this.proteinInformation.size()) {
+					for(int i = helix.x; i <= helix.y; i++) {
+						this.proteinInformation.get(i).y = SecondaryStructure.HELIX;
+					}
+				}
+			}
+			
+			for(Tuple2<Integer, Integer> sheet : this.sheets) {
+				if(sheet.y < this.proteinInformation.size()) {
+					for(int i = sheet.x; i <= sheet.y; i++) {
+						if(this.proteinInformation.get(i).y == SecondaryStructure.NONE) {
+							this.proteinInformation.get(i).y = SecondaryStructure.SHEET;
+						}
+					}
+				}
+			}
+			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -86,20 +107,8 @@ public class PDBParser {
 		String name = columns(record, 13, 16);
 		
 		if(!this.endOfBackbone && name.equals("N")) {
-			this.primaryStructure.add(AminoAcid.Type.valueOf(columns(record, 17, 20)));
+			this.proteinInformation.add(new Tuple2<Type,SecondaryStructure>(Type.valueOf(columns(record, 17, 20)),SecondaryStructure.NONE));
 		}
-	}
-	
-	/**
-	 * Parses a backbone hetero atom.
-	 * 
-	 * @param record The PDB record.
-	 */
-	private void parseHeteroAtom(String record) {
-		this.parseAtom(record);
-		
-		// PDB files are 1-indexed but we need 0-indexing
-		this.heteroAtoms.add(this.atomCount-1);
 	}
 
 	/**

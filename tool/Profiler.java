@@ -65,6 +65,15 @@ public class Profiler {
 		
 		this.timer.remove(area);
 	}
+	
+	/**
+	 * Clears the profiler.
+	 */
+	public void clear() {
+		this.counter.clear();
+		this.time.clear();
+		this.timer.clear();
+	}
 
 	/**
 	 * The current execution statistics.

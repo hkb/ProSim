@@ -73,9 +73,7 @@ public class AdjustableChainTree extends ChainTree {
 		super(cTree.getBackboneAtomPositions());
 		
 		// copy secondary structure information
-		this.primaryStructure = cTree.primaryStructure;
-		this.helixes = cTree.helixes;
-		this.sheets = cTree.sheets;
+		this.proteinInformation = cTree.proteinInformation;
 		
 		// optimise the tree
 		this.lockAndGroupPeptidePlanes();
@@ -123,7 +121,7 @@ public class AdjustableChainTree extends ChainTree {
 	 * Locks and groups alpha helices.
 	 */
 	private void lockAndGroupAlphaHelices() {
-		for (Tuple2<Integer, Integer> helix : super.helixes) {
+		for (Tuple2<Integer, Integer> helix : super.getHelixSegments()) {
 			this.groupAndLockSegment(helix.x, helix.y);
 		}
 	}
@@ -132,7 +130,7 @@ public class AdjustableChainTree extends ChainTree {
 	 * Locks and groups beta sheets. 
 	 */
 	private void lockAndGroupBetaSheets() {
-		for (Tuple2<Integer, Integer> sheet : super.sheets) {
+		for (Tuple2<Integer, Integer> sheet : super.getSheetSegments()) {
 			this.groupAndLockSegment(sheet.x, sheet.y);
 		}
 	}

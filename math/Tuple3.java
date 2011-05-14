@@ -9,7 +9,7 @@ package math;
  * @param <T2> The type of the tuples second element.
  * @param <T3> The type of the tuples third element.
  */
-public class Tuple3<T1, T2, T3> {
+public class Tuple3<T1, T2, T3> implements Comparable<Tuple3<T1, T2, T3>> {
 	
 	public T1 x;
 	public T2 y;
@@ -28,14 +28,41 @@ public class Tuple3<T1, T2, T3> {
 		this.z = z;
 	}
 	
-	/**
-	 * Determines if the elements of this and the other tuple are equal.
-	 * 
-	 * @param other The other tuple.
-	 * @return 
-	 */
-	public boolean equals(Tuple3<T1, T2, T3> other) {
-		return this.x.equals(other.x) && this.y.equals(other.y) && this.z.equals(other.z);
+	@Override
+	public boolean equals(Object other) {
+		if(other == null)
+			return false;
+		if(!(other instanceof Tuple3))
+			return false;
+		
+		// java got generics all wrong so we don't really know what's going to happen. 
+		try {
+			Tuple3 otherTuple = (Tuple3) other;
+		
+			return this.x.equals(otherTuple.x) && this.y.equals(otherTuple.y) && this.z.equals(otherTuple.z);
+		} catch (ClassCastException e) {
+			return false;
+		}
+	}
+	
+	@Override
+	public int compareTo(Tuple3<T1, T2, T3> other) {
+		try {
+			Comparable x = (Comparable) this.x;
+			Comparable y = (Comparable) this.y;
+			Comparable z = (Comparable) this.z;
+			
+			int xs = x.compareTo(other.x);
+			
+			if(xs != 0)
+				return xs;
+			
+			int ys = y.compareTo(other.y);
+			
+			return (ys != 0) ? ys : z.compareTo(other.z);
+		} catch (ClassCastException e) {
+			throw new IllegalArgumentException(other + " isn't comparable to " + this);
+		}
 	}
 	
 	@Override

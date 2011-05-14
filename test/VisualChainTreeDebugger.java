@@ -17,19 +17,19 @@ import edu.geom3D.Capsule;
 
 public class VisualChainTreeDebugger {
 	public static void main(String[] args) {
-		//File[] listOfFiles = new File("/home/hkb/workspace/ProSim/pdb_files").listFiles();
-		//String pdbId = listOfFiles[(int)(Math.random() * listOfFiles.length)].getName().substring(0,4);
-		//System.out.println(pdbId);
-		String pdbId = "1PUX";
+		File[] listOfFiles = new File("/home/hkb/.workspace/ProSim/pdb_files").listFiles();
+		String pdbId = listOfFiles[(int)(Math.random() * listOfFiles.length)].getName().substring(0,4);
+		System.out.println(pdbId);
+		//String pdbId = "1JB0";
 		
 		
 		//
 		ChainTree cTree = new AdjustableChainTree(pdbId);
 		
 		
-		showBinaryTreeStructure(cTree);
+		//showBinaryTreeStructure(cTree);
 		showProtein(cTree);
-		showBoundingVolumes(cTree);
+		//showBoundingVolumes(cTree);
 		
 		// paint single volume
 		//paintBoundingVolume(cTree, cTree.backboneBonds[1].parent, new ChainTreeScene(cTree));

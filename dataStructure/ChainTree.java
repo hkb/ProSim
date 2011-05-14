@@ -1,12 +1,15 @@
 package dataStructure;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 import chemestry.AminoAcid;
+import chemestry.AminoAcid.SecondaryStructure;
+import chemestry.AminoAcid.Type;
 
 import math.Point3D;
 import math.Tuple2;
@@ -29,9 +32,7 @@ public class ChainTree {
 	private double angle;											// the rotating angle of this backbone
 	public TransformationMatrix worldTransformation;				// the transformation to transform from the proteins local coordinates to the world 
 	
-	public List<AminoAcid.Type> primaryStructure = new ArrayList<AminoAcid.Type>();
-	public List<Tuple2<Integer,Integer>> helixes = new ArrayList<Tuple2<Integer,Integer>>();		// set of all bonds in alpha helices
-	public List<Tuple2<Integer,Integer>> sheets = new ArrayList<Tuple2<Integer,Integer>>();		// set of all bonds in beta sheets 
+	protected List<Tuple2<Type,SecondaryStructure>> proteinInformation;// information about the properties of the protein
 	
 	private Set<Integer> rotatedBonds = new HashSet<Integer>();		// the last rotated bond
 	private int lowestRotatedBond = Integer.MAX_VALUE;				// the index of the leftmost rotated bond
@@ -48,9 +49,8 @@ public class ChainTree {
 		
 		PDBParser parser = new PDBParser(pdbId); // we have to parse the file as java require that the first statement is a constructor
 												 // call and i don't want to make a static method.
-		this.helixes = parser.helixes;
-		this.sheets = parser.sheets;
-		this.primaryStructure = parser.primaryStructure;
+
+		this.proteinInformation = parser.proteinInformation;
 	}
 	
 	/**
@@ -62,22 +62,10 @@ public class ChainTree {
 		this(getChainTreesCombinedBackboneAtomPositions(cTrees));
 		
 		// stuff to copy protein data
-		int i = 0;
 		for (ChainTree cTree : cTrees) {
-			
 			// copy primary structure information
-			this.primaryStructure.addAll(cTree.primaryStructure);
-			
-			// copy secondary structure information
-			for (Tuple2<Integer,Integer> helix : cTree.helixes) {
-				this.helixes.add(new Tuple2<Integer,Integer>(helix.x+i, helix.y+i));
-			}
+			this.proteinInformation.addAll(cTree.proteinInformation);
 
-			for (Tuple2<Integer,Integer> sheet : cTree.sheets) {
-				this.sheets.add(new Tuple2<Integer,Integer>(sheet.x+i, sheet.y+i));
-			}
-			
-			i += cTree.length();
 		}
 	}
 	
@@ -172,7 +160,7 @@ public class ChainTree {
 	 * @return Number of amino acids.
 	 */
 	public int length() {
-		return (this.backboneBonds.length+1) / 3; // there are 3*n-1 bonds in a backbone of n amino acids
+		return this.proteinInformation.size();
 	}
 	
 	/**
@@ -247,23 +235,8 @@ public class ChainTree {
 	public ChainTree getSubchain(int start, int end) {
 		ChainTree cTree = new ChainTree(this.getBackboneAtomPositions(start, end));
 		
-		// copy primary structure information
-		for (int i = start; i <= end; i++) {
-			cTree.primaryStructure.add(this.primaryStructure.get(i-1));
-		}
-		
-		// copy secondary structure information
-		for (Tuple2<Integer, Integer> helix : this.helixes) {
-			if (start <= helix.x && helix.x <= end || start <= helix.y && helix.y <= end) {
-				cTree.helixes.add(new Tuple2<Integer,Integer>(Math.max(start, helix.x)-start+1, Math.min(end, helix.y)-start+1));
-			}
-		}
-
-		for (Tuple2<Integer, Integer> sheet : this.sheets) {
-			if (start <= sheet.x && sheet.x <= end || start <= sheet.y && sheet.y <= end) {
-				cTree.sheets.add(new Tuple2<Integer,Integer>(Math.max(start, sheet.x)-start+1, Math.min(end, sheet.y)-start+1));
-			}
-		}
+		// copy protein information
+		cTree.proteinInformation = this.proteinInformation.subList(start-1, end);
 		
 		return cTree;
 	}
@@ -420,34 +393,6 @@ public class ChainTree {
 	}
 	
 	/**
-	 * Is the amino acid part of a helix.
-	 * 
-	 * @param i The sequence number of the amino acid.
-	 */
-	public boolean isInHelix(int aminoAcid) {
-		for (Tuple2<Integer,Integer> helix : this.helixes) {
-			if (helix.x <= aminoAcid && aminoAcid <= helix.y)
-				return true;
-		}
-		
-		return false;
-	}
-	
-	/**
-	 * Is the amino acid part of a sheet.
-	 * 
-	 * @param i The sequence number of the amino acid.
-	 */
-	public boolean isInSheet(int aminoAcid) {
-		for (Tuple2<Integer,Integer> sheet : this.sheets) {
-			if (sheet.x <= aminoAcid && aminoAcid <= sheet.y)
-				return true;
-		}
-		
-		return false;
-	}
-	
-	/**
 	 * Tests the tree for a self-clash.
 	 * 
 	 * @return true if the tree clashes with it self.
@@ -534,6 +479,27 @@ public class ChainTree {
 	 */
 	public boolean areClashing(ChainTree other) {
 		boolean areClashing = areClashing(this.root, other.root, other);
+		
+		this.lowestRotatedBond = Integer.MAX_VALUE;
+		
+		return areClashing;
+	}
+	
+	/**
+	 * Determines if this chain tree clashes with the others.
+	 * 
+	 * @param other The other chain trees.
+	 * @return true if a clash occurs else false.
+	 */
+	public boolean areClashing(ChainTree[] others) {
+		boolean areClashing = false;
+		
+		for(ChainTree other : others) {
+			areClashing = areClashing(this.root, other.root, other);
+			
+			if(areClashing)
+				break;
+		}
 		
 		this.lowestRotatedBond = Integer.MAX_VALUE;
 		
@@ -666,24 +632,76 @@ public class ChainTree {
 		StringBuilder tmpString = new StringBuilder();
 		
 		int i = 0;
-		for (CTLeaf bond : this.backboneBonds) {
-			tmpString.append(bond);
+		for (Tuple2<Type,SecondaryStructure> aminoAcid : this.proteinInformation) {
+			tmpString.append(aminoAcid.x);
 			
-			if (this.isInHelix(i/3 + 1)) {
-				tmpString.append("(HELIX)");
-			} else if (this.isInSheet(i/3 + 1)) {
-				tmpString.append("(SHEET)");
+			if(aminoAcid.y == SecondaryStructure.HELIX) {
+				tmpString.append(" (HELIX)");
+			} else if(aminoAcid.y == SecondaryStructure.SHEET) {
+				tmpString.append(" (SHEET)");
 			}
 			
 			i++;
 			
-			if (i < this.backboneBonds.length)
+			if (i < this.proteinInformation.size())
 				tmpString.append(", ");
 		}
 		
 		return tmpString.toString();
 	}
 	
+	
+	/*
+	 * Protein specific information.
+	 */
+	
+	/**
+	 * Is the amino acid part of a helix.
+	 * 
+	 * @param i The sequence number of the amino acid.
+	 */
+	public boolean isInHelix(int aminoAcid) {
+		return this.proteinInformation.get(aminoAcid-1).y == SecondaryStructure.HELIX;
+	}
+	
+	/**
+	 * Is the amino acid part of a sheet.
+	 * 
+	 * @param i The sequence number of the amino acid.
+	 */
+	public boolean isInSheet(int aminoAcid) {
+		return this.proteinInformation.get(aminoAcid-1).y == SecondaryStructure.SHEET;
+	}
+	
+	/**
+	 * Returns segments of all known helixes in the protein.
+	 * 
+	 * @return A sorted, none overlapping list of pairs indexes of the first and last 
+	 * 		   residues (both included) of the known helixes. 
+	 */
+	public List<Tuple2<Integer,Integer>> getHelixSegments() {
+		return this.getSecondaryStructureSegments(SecondaryStructure.HELIX);
+	}
+
+	/**
+	 * Returns segments of all known sheets in the protein.
+	 * 
+	 * @return A sorted, none overlapping list of pairs indexes of the first and last 
+	 * 		   residues (both included) of the known sheets. 
+	 */
+	public List<Tuple2<Integer,Integer>> getSheetSegments() {
+		return this.getSecondaryStructureSegments(SecondaryStructure.SHEET);
+	}
+
+	/**
+	 * Returns segments of all known segments not in a known secondary structure in the protein.
+	 * 
+	 * @return A sorted, none overlapping list of pairs indexes of the first and last 
+	 * 		   residues (both included) of the segments not in a known secondary structure. 
+	 */
+	public List<Tuple2<Integer,Integer>> getIntermediateSegments() {
+		return this.getSecondaryStructureSegments(SecondaryStructure.NONE);
+	}
 	
 	/**
 	 * The the phi bond from the amino acid.
@@ -725,8 +743,45 @@ public class ChainTree {
 		return bond/3+1;
 	}
 	
+	/**
+	 * Gives the type of the amino acid.
+	 * 
+	 * @param aminoAcid The index of the amino acid.
+	 * @return the type of the amino acid.
+	 */
 	public AminoAcid.Type aminoAcidType(int aminoAcid) {
-		return this.primaryStructure.get(aminoAcid-1);
+		return this.proteinInformation.get(aminoAcid-1).x;
+	}
+	
+	/**
+	 * Analyses the backbone for segments of secondary structures of a specific type. 
+	 * 
+	 * @param type The type of the secondary structure.
+	 * @return A sorted, none overlapping list of pairs indexes of the first and last 
+	 * 		   residues (both included) of the segment. 
+	 */
+	private List<Tuple2<Integer,Integer>> getSecondaryStructureSegments(SecondaryStructure type) {
+		int start = (this.proteinInformation.get(0).y == type) ? 1 : -1;
+		int i = 1;
+		
+		List<Tuple2<Integer,Integer>> structure = new ArrayList<Tuple2<Integer,Integer>>();
+		
+		for(Tuple2<Type,SecondaryStructure> aminoAcid : this.proteinInformation) {
+			if(start == -1 && aminoAcid.y == type) {
+				start = i;
+				
+			} else if(start != -1 && aminoAcid.y != type) {
+				structure.add(new Tuple2<Integer,Integer>(start, i-1));
+				start = -1;
+			}
+			
+			i++;
+		}
+		
+		if(start != -1)
+			structure.add(new Tuple2<Integer,Integer>(start, i-1));
+		
+		return structure;
 	}
 	
 	/*

@@ -5,6 +5,9 @@ public class AminoAcid {
 	public static enum Type {ALA, ARG, ASN, ASP, CYS, GLU, GLN, GLY, HIS, ILE, LEU, LYS, MET, PHE, PRO, SER, THR, TRP, TYR, VAL, SEC, PYL};
 	public static int count = 22;
 	
+	public static enum SecondaryStructure {NONE, HELIX, SHEET};
+	
+	
 	public static Type stringToType(String str) {
 		return Type.valueOf(str);
 	}
