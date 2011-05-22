@@ -19,9 +19,9 @@ public class SubchainExtractor {
 		
 		ChainTreeScene scene = new ChainTreeScene();
 		
-		AdjustableChainTree t1 = cTree.getSubchain(0,7);
+		AdjustableChainTree t1 = cTree.getSubchain(1,7);
 		AdjustableChainTree t2 = cTree.getSubchain(9, 16);
-		AdjustableChainTree t12 = cTree.getSubchain(0, 16);
+		AdjustableChainTree t12 = cTree.getSubchain(1, 16);
 
 		t1.move(new Vector3D(0.0,0.0,-3.0));
 		
@@ -33,6 +33,12 @@ public class SubchainExtractor {
 		
 		scene.scene.centerCamera();
 		scene.scene.autoZoom();
+				
+		System.out.println(t1.getDihedralAngles(1, 1));
+		System.out.println(t1.getDihedralAngles(1, 1));
+		scene.repaint();
+		
+		Thread.sleep(10000000);
 		
 		// toy rotation
 		List<Integer> rotateableBonds = t1.rotatableBonds();

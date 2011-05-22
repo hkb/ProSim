@@ -16,11 +16,13 @@ public class VisualVectorDebugger {
 		Vector3D c = new Vector3D(1.0,1.0,1.0);
 		Vector3D d = a.cross(b);
 		Vector3D e = a.projectOnto(c);
+		Vector3D f = a.vectorTo(b);
 		
 		scene.addShape(new Cylinder3d(new Point3d(), vectorToPoint(a), 0.1f), Color.RED);
 		scene.addShape(new Cylinder3d(new Point3d(), vectorToPoint(b), 0.1f), Color.GREEN);
 		scene.addShape(new Cylinder3d(new Point3d(), vectorToPoint(c), 0.1f), Color.YELLOW);
 		scene.addShape(new Cylinder3d(new Point3d(), vectorToPoint(d), 0.1f), Color.BLUE);
+		scene.addShape(new Cylinder3d(vectorToPoint(a), vectorToPoint(a.add(f)), 0.01f), Color.GRAY);
 		scene.addShape(new Cylinder3d(new Point3d(), vectorToPoint(e), 0.2f), new Color(255, 255, 0, 100));
 		
 		scene.addText("a", vectorToPoint(a));

@@ -6,6 +6,7 @@ public class AminoAcid {
 	public static int count = 22;
 	
 	public static enum SecondaryStructure {NONE, HELIX, SHEET};
+	public static enum BondType {PHI, PSI, OMEGA};
 	
 	
 	public static Type stringToType(String str) {

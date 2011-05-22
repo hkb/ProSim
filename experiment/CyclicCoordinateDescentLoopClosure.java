@@ -7,14 +7,17 @@ import java.io.IOException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import boundingVolume.Empty;
@@ -36,7 +39,7 @@ import energyFunction.LoopAtomDistance;
 public class CyclicCoordinateDescentLoopClosure {
 	
 	private static enum FoldingRestriction {NONE, NEIGHBOUR_INDEPENDENT, NEIGHBOUR_DEPENDENT};
-	private static enum UnfoldingRestriction {NONE, NATURAL};
+	private static enum UnfoldingRestriction {NONE, NATURAL, NATURAL_ANGLES_ONLY};
 	private static RamachandranDistribution ramachandranDistribution = new RamachandranDistribution();
 	private static ChainTreeScene scene = null;//new ChainTreeScene();
 	private static Profiler profiler = new Profiler();
@@ -45,24 +48,29 @@ public class CyclicCoordinateDescentLoopClosure {
 	/*
 	 * Configuration.
 	 */
-	private static String[] pdbIds = {"1PUX","1T0G","1E2B","2J3L","1M4J","1K7C","2YS4","1QDD","1O26","2OV0","1TI8","1UW0","1Z0J","1SPK","2CSK","2G1E","1VZI",
-									  "2DNE","1X45","1TRE","2DAO","1H6X","1AYJ","1YO4","2OV0","2E2F","1WGV","2H41","2A7R","2BYE"};
-	private static String[] sheetDominantPDBs = {"1PUX","1TRE"};
+	private static String[] sheetDominantPDBs = {"1PUX","1E2B","2YS4","1QDD","1O26","2OV0","1Z0J","2G1E","1X45","1TRE","2GCX","2COF","1BUJ",
+												 "1JFM","1MDC","2JPH","1UC6","1E2B","1ZRI","1MKB","1QA7","2PND","1HX7","1YH5","1P9K",
+												 "1RQW","1O26","2JZR","1WEY","2YZ0","1XHJ"};
+	
+	private static String[] nonSheetDominantPDBs = {"1T0G","2J3L","1M4J","1K7C","1TI8","1UW0","1SPK","2CSK","1VZI", "2DNE","2DAO","1H6X","1AYJ",
+													"1YO4","2E2F","1WGV","2H41","2A7R","1LTG","1Z5F","1TIZ","1HUX","2A7R","1FSG","1B1A","2RDQ",
+													"2V1N","2Z9H","1H6Q","1IXH","2OLM","2PRF","1KUF","2BYE"};
+	
 	private static double TARGET_RMSD = 0.08;
 	private static int MAX_ITERATIONS_PER_CLOSE = 5000;
 	private static int NUMBER_OF_TRIAL_LOOPS = 100;
 	
-	private static int NUMBER_OF_CONCURRENT_THREADS = 1;
 	
+		
 	public static void main(String[] args) throws Exception {
 		
 		/**
-		 * Thread for folding a single protein.
+		 * Thread for folding all loops in a single protein.
 		 */
-		final class ProteinFolder implements Runnable {
+		final class LoopCloser implements Runnable {
 			private String pdbId;
 			
-			public ProteinFolder(String pdbId) {
+			public LoopCloser(String pdbId) {
 				this.pdbId = pdbId;
 			}
 			
@@ -72,38 +80,102 @@ public class CyclicCoordinateDescentLoopClosure {
 			}
 		}
 		
+		/**
+		 * Thread for folding a single protein.
+		 */
+		final class SheetFolder implements Runnable {
+			private String pdbId;
+			
+			public SheetFolder(String pdbId) {
+				this.pdbId = pdbId;
+			}
+			
+			@Override
+			public void run() {
+				closeAllSheetLoops(this.pdbId);
+			}
+		}
+		
+		List<Thread> threads = new LinkedList<Thread>();
 		
 		/*
-		 * Run experiments.
+		 * Close all loops.
 		 */
-		Date today = Calendar.getInstance().getTime();
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd_hh.mm.ss");
-		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/experiments-"+formatter.format(today)+".tsv");
 		
+		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/latest-all-loop-experiment.tsv");
 		
-		for(int i = 0; i < pdbIds.length; i += NUMBER_OF_CONCURRENT_THREADS) {
-			Thread[] threads = new Thread[NUMBER_OF_CONCURRENT_THREADS];
-			
-			for(int k = 0; k < NUMBER_OF_CONCURRENT_THREADS && i+k < pdbIds.length; k++) {
-				System.out.println("starting thread for: " + pdbIds[i+k]);
-				threads[k] = new Thread(new ProteinFolder(pdbIds[i+k]));
-				threads[k].start();
-			}
-			
-			for(int k = 0; k < NUMBER_OF_CONCURRENT_THREADS; k++) {
-				threads[k].join();
-			}
+		List<String> pdbIds = new LinkedList<String>(Arrays.asList(sheetDominantPDBs));
+		pdbIds.addAll(Arrays.asList(nonSheetDominantPDBs));
+		
+		for(String pdbId : pdbIds) {
+			Thread thread = new Thread(new LoopCloser(pdbId));
+			thread.start();
+			threads.add(thread);
+		}
+		
+		for(Thread thread : threads) {
+			thread.join();
 		}
 		
 		output.close();
 		
+		System.out.println("Done with all loops.");
+		
+		
+		
+		/*
+		 * Close all central beta sheets.
+		 */
+		
+		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/latest-central-betasheet-experiment.tsv");
+		
+		
+		for(String pdbId : sheetDominantPDBs) {
+			Thread thread = new Thread(new SheetFolder(pdbId));
+			thread.start();
+			threads.add(thread);
+		}
+		
+		for(Thread thread : threads) {
+			thread.join();
+		}
+		
+		output.close();
+		
+		System.out.println("Done with sheet dominant proteins.");
+		
+		
+		
+		/*
+		 * Close all non-central beta sheets.
+		 */
+		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/latest-non-central-betasheet-experiment.tsv");
+		
+		for(String pdbId : nonSheetDominantPDBs) {
+			Thread thread = new Thread(new SheetFolder(pdbId));
+			thread.start();
+			threads.add(thread);
+		}
+		
+		for(Thread thread : threads) {
+			thread.join();
+		}
+		
+		output.close();
+		
+		System.out.println("Done with non sheet dominant proteins.");
+		
 		System.out.println("TOTALLY DONE!");
 	}
+	
+	
+	
+	
 	
 	private static void closeAllSheetLoops (String pdbId) {
 		AdjustableChainTree cTree = new AdjustableChainTree(pdbId);
 		List<Tuple2<Integer, Integer>> segments = cTree.getSheetSegments();
-		/*		
+			/*
 		scene.add(cTree.getSubchain(1, segments.get(0).x));
 		for(Tuple2<Integer, Integer> segment : segments) {
 			scene.add(cTree.getSubchain(segment.x, segment.y));
@@ -117,7 +189,7 @@ public class CyclicCoordinateDescentLoopClosure {
 			Tuple2<Integer, Integer> sheet1 = segments.get(i);
 			Tuple2<Integer, Integer> sheet2 = segments.get(i+1);
 						
-			if(sheet2.x - sheet1.y >= 3) { // min 4 residues long
+			if(segmentLength(sheet1.y+1, sheet2.x-1) >= 4) { // min 4 residues long
 				closeLoop(pdbId, cTree, sheet1.y+1, sheet2.x-1);
 			}
 		}
@@ -143,16 +215,15 @@ public class CyclicCoordinateDescentLoopClosure {
 		scene.scene.autoZoom();
 		*/
 		
-		for(int i = 1; i < segments.size()-1; i++) { // min 4 residues long
+		for(int i = 1; i < segments.size()-1; i++) { // segment must be minimum 4 residues long
 			Tuple2<Integer, Integer> segment = segments.get(i);
 			
-			if(segment.y - segment.x >= 3) {	
+			if(segmentLength(segment.x, segment.y) >= 4) {	
 				closeLoop(pdbId, cTree, segment.x, segment.y);
 			}
 		}
 		
 		//scene.remove(cTree);
-
 	}
 
 
@@ -176,16 +247,14 @@ public class CyclicCoordinateDescentLoopClosure {
 			}
 		}
 		
-		// phi, psi angles
-		List<Double> dihedralAngles = new ArrayList<Double>();
-
-		int k = 0;
-		for (double angle : cTree.getDihedralAngles()) {
-			if (angle != 0.0 && k % 3 != 2) {
-				dihedralAngles.add(angle);
-			}
+		// phi, psi angles but not from loop and not in secondary structure
+		List<Tuple2<Double,Double>> phiPsiPairs = new ArrayList<Tuple2<Double,Double>>();
+		for (int aminoAcid = 2; aminoAcid < cTree.length()-1; aminoAcid++) {
+			List<Double> angles = cTree.getDihedralAngles(aminoAcid, aminoAcid);
 			
-			k++;
+			if ((aminoAcid < start || end < aminoAcid) && !cTree.isInHelix(aminoAcid) && !cTree.isInSheet(aminoAcid)) {
+				phiPsiPairs.add(new Tuple2<Double,Double>(angles.get(0), angles.get(1)));
+			}
 		}
 
 		// init CCD
@@ -201,8 +270,8 @@ public class CyclicCoordinateDescentLoopClosure {
 		// generate unfold conformations
 		AdjustableChainTree cTreeLoopCopy = cTreeLoop.getSubchain(1, cTreeLoop.length());
 		
-		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.NATURAL}) {
-			Collection<Collection<Tuple2<Integer,Double>>> conformations = generateConformations(cTreeLoopCopy, cTreeRemainder, dihedralAngles, start, end, unfolding);
+		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.NATURAL, UnfoldingRestriction.NATURAL_ANGLES_ONLY}) {
+			Collection<List<Tuple2<Integer,Tuple2<Double,Double>>>> conformations = generateConformations(cTreeLoopCopy, cTreeRemainder, phiPsiPairs, start, end, unfolding);
 			
 			for(FoldingRestriction restriction : new FoldingRestriction[]{FoldingRestriction.NONE, FoldingRestriction.NEIGHBOUR_INDEPENDENT, FoldingRestriction.NEIGHBOUR_DEPENDENT}) {
 				int itterations = 0;
@@ -211,9 +280,9 @@ public class CyclicCoordinateDescentLoopClosure {
 				Collection<Double> energies = new ArrayList<Double>();
 				double minEnergy = Double.MAX_VALUE;
 				
-				for(Collection<Tuple2<Integer,Double>> conformation : conformations) {
+				for(Collection<Tuple2<Integer,Tuple2<Double,Double>>> conformation : conformations) {
 					itterations = 0;
-					unforldIntoConformation(cTreeLoop, conformation);
+					unforldIntoConformation(cTreeLoop, conformation);					
 					
 					while(true) {
 						for (int i = 0, j = rotateableBonds.size(); i < j; i += 2) { // loop over pairs of phi, psi bonds
@@ -254,12 +323,12 @@ public class CyclicCoordinateDescentLoopClosure {
 							
 								switch(restriction) {
 									case NEIGHBOUR_INDEPENDENT:
-										oldP = ramachandranDistribution.probability(cTreeLoop.aminoAcidType(aminoAcid), oldPhi, oldPsi);
-										newP = ramachandranDistribution.probability(cTreeLoop.aminoAcidType(aminoAcid), newPhi, newPsi);
+										oldP = ramachandranDistribution.probability(cTreeLoop.getAminoAcidType(aminoAcid), oldPhi, oldPsi);
+										newP = ramachandranDistribution.probability(cTreeLoop.getAminoAcidType(aminoAcid), newPhi, newPsi);
 										break;
 									case NEIGHBOUR_DEPENDENT: 
-										oldP = ramachandranDistribution.probability(cTreeLoop.aminoAcidType(aminoAcid), cTreeLoop.aminoAcidType(aminoAcid-1), cTreeLoop.aminoAcidType(aminoAcid+1), oldPhi, oldPsi);
-										newP = ramachandranDistribution.probability(cTreeLoop.aminoAcidType(aminoAcid), cTreeLoop.aminoAcidType(aminoAcid-1), cTreeLoop.aminoAcidType(aminoAcid+1), newPhi, newPsi);
+										oldP = ramachandranDistribution.probability(cTreeLoop.getAminoAcidType(aminoAcid), cTreeLoop.getAminoAcidType(aminoAcid-1), cTreeLoop.getAminoAcidType(aminoAcid+1), oldPhi, oldPsi);
+										newP = ramachandranDistribution.probability(cTreeLoop.getAminoAcidType(aminoAcid), cTreeLoop.getAminoAcidType(aminoAcid-1), cTreeLoop.getAminoAcidType(aminoAcid+1), newPhi, newPsi);
 										break;
 									default:
 										oldP = Double.NaN;
@@ -313,63 +382,58 @@ public class CyclicCoordinateDescentLoopClosure {
 		}
 	}
 	
-	private static Collection<Tuple2<Integer,Double>> unfoldNatural(AdjustableChainTree cTree, AdjustableChainTree other, List<Double> angles, int start, int end) {
-		int startBond = cTree.getPhi(start);
-		int endBond = cTree.getPsi(end);
+	
+	
+	
+	
+	private static List<Tuple2<Integer,Tuple2<Double,Double>>> unfold(AdjustableChainTree cTree, AdjustableChainTree other, List<Tuple2<Double,Double>> phiPsiPairs, int start, int end, UnfoldingRestriction restriction) {
+		Set rotateableBonds = new HashSet(cTree.rotatableBonds());
 		
-		Collection<Tuple2<Integer,Double>> conformation;
+		List<Tuple2<Integer,Tuple2<Double,Double>>> conformation;
 		
 		do {
-			conformation = new LinkedList<Tuple2<Integer,Double>>();
+			conformation = new LinkedList<Tuple2<Integer,Tuple2<Double,Double>>>();
 			
-			for (int bond : cTree.rotatableBonds()) {
-				if (startBond <= bond && bond <= endBond) {
-					double angle = angles.get((int) (Math.random() * angles.size()));
+			for (int i = start; i <= end; i++) {
+				if(rotateableBonds.contains(cTree.getPhi(i))) {
+					if(!rotateableBonds.contains(cTree.getPsi(i))) {
+						throw new IllegalArgumentException("Both phi and psi angles must be rotateable!");
+					}
+				
+					Tuple2<Double,Double> angles = null;
 					
-					List<Double> currentAngles = cTree.getDihedralAngles(cTree.getAminoAcid(bond), cTree.getAminoAcid(bond));
-					double currentAngle = currentAngles.get((bond % 3 == 0) ? 0 : 1);
-					cTree.changeRotationAngle(bond, currentAngle-angle);
-					
-					conformation.add(new Tuple2<Integer,Double>(bond, currentAngle-angle));
+					if(restriction == UnfoldingRestriction.NONE) {
+						angles = new Tuple2<Double,Double>(Math.random()*Math.PI*2, Math.random()*Math.PI*2);
+					} else {
+						angles = phiPsiPairs.get((int) (Math.random() * phiPsiPairs.size()));
+					}
+				
+					cTree.setRotationAngle(cTree.getPhi(i), angles.x);
+					cTree.setRotationAngle(cTree.getPsi(i), angles.y);
+						
+					conformation.add(new Tuple2<Integer,Tuple2<Double,Double>>(i, angles));
 				}
 			}
-		} while (cTree.isClashing() || cTree.areClashing(other));
-
-		return conformation;
-	}
-	
-	private static Collection<Tuple2<Integer,Double>> unfoldRandom(AdjustableChainTree cTree, int start, int end) {
-		int startBond = cTree.getPhi(start);
-		int endBond = cTree.getPsi(end);
+		} while (restriction == UnfoldingRestriction.NATURAL && (cTree.isClashing() || cTree.areClashing(other)));
 		
-		Collection<Tuple2<Integer,Double>> conformation = new LinkedList<Tuple2<Integer,Double>>();
-			
-		for (int bond : cTree.rotatableBonds()) {
-			if (startBond <= bond && bond <= endBond) {
-				conformation.add(new Tuple2<Integer,Double>(bond, Math.random()*Math.PI*2));
-			}
-		}
-
 		return conformation;
 	}
+
 	
-	private static Collection<Collection<Tuple2<Integer,Double>>> generateConformations(AdjustableChainTree cTree, AdjustableChainTree other, List<Double> angles, int start, int end, UnfoldingRestriction restriction) {
-		List<Collection<Tuple2<Integer,Double>>> conformations = new ArrayList<Collection<Tuple2<Integer,Double>>>();
+	private static Collection<List<Tuple2<Integer,Tuple2<Double,Double>>>> generateConformations(AdjustableChainTree cTree, AdjustableChainTree other, List<Tuple2<Double,Double>> phiPsiPairs, int start, int end, UnfoldingRestriction restriction) {
+		List<List<Tuple2<Integer,Tuple2<Double,Double>>>> conformations = new ArrayList<List<Tuple2<Integer,Tuple2<Double,Double>>>>();
 		
 		for(int i = 0; i < NUMBER_OF_TRIAL_LOOPS; i++) {
-			if(restriction == UnfoldingRestriction.NATURAL) {
-				conformations.add(unfoldNatural(cTree, other, angles, start, end));
-			} else {
-				conformations.add(unfoldRandom(cTree, start, end));
-			}
+			conformations.add(unfold(cTree, other, phiPsiPairs, start, end, restriction));
 		}
 		
 		return conformations;
 	}
 	
-	private static void unforldIntoConformation(ChainTree cTree, Collection<Tuple2<Integer,Double>> conformation) {
-		for(Tuple2<Integer,Double> bondInfo : conformation) {
-			cTree.changeRotationAngle(bondInfo.x, bondInfo.y);
+	private static void unforldIntoConformation(ChainTree cTree, Collection<Tuple2<Integer,Tuple2<Double,Double>>> conformation) {
+		for(Tuple2<Integer,Tuple2<Double,Double>> bondInfo : conformation) {
+			cTree.setRotationAngle(cTree.getPhi(bondInfo.x), bondInfo.y.x);
+			cTree.setRotationAngle(cTree.getPsi(bondInfo.x), bondInfo.y.y);
 		}
 	}
 	
@@ -380,5 +444,9 @@ public class CyclicCoordinateDescentLoopClosure {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static int segmentLength(int x, int y) {
+		return y-x+1;
 	}
 }

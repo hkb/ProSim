@@ -6,8 +6,13 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
+
+import math.Tuple2;
 
 import chemestry.AminoAcid;
+import chemestry.AminoAcid.Type;
 
 public class RamachandranDistribution {
 	
@@ -17,9 +22,7 @@ public class RamachandranDistribution {
 	private Double[][][][] leftNeightbour = new Double[AminoAcid.count][AminoAcid.count][360/5][360/5];
 	
 	private Double[][][] singleProbabilities = new Double[AminoAcid.count][360/5][360/5];
-	
-	
-	
+		
 	public RamachandranDistribution() {
 		this("/home/hkb/data/bachelor/Neighbor-dependent Ramachandran Distributions/NDRD_TCBIG.txt");
 	}

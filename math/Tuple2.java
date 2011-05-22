@@ -23,7 +23,7 @@ public class Tuple2<T1, T2> implements Comparable<Tuple2<T1, T2>> {
 		this.x = x;
 		this.y = y;
 	}
-	
+
 	@Override
 	public boolean equals(Object other) {
 		if(other == null)

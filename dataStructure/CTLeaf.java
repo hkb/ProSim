@@ -39,7 +39,7 @@ public class CTLeaf extends CTNode {
 	 * @param angle The angle to rotate with.
 	 */
 	public void rotate(double angle) {
-		this.angle -= angle;
+		this.angle += angle;
 		
 		transformationMatrix.rotate(this.angle);
 	}

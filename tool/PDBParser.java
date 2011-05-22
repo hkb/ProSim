@@ -93,7 +93,7 @@ public class PDBParser {
 		String name = columns(record, 13, 16);
 		
 		// is backbone
-		if(!this.endOfBackbone && (name.equals("N") || name.equals("CA") || name.equals("C"))) {			
+		if(!this.endOfBackbone && (name.equals("N") || name.equals("CA") || name.equals("C"))) {	
 			double x = Double.parseDouble(columns(record, 31, 38));
 			double y = Double.parseDouble(columns(record, 39, 46));
 			double z = Double.parseDouble(columns(record, 47, 54));

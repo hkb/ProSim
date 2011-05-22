@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import chemestry.AminoAcid;
+import chemestry.AminoAcid.BondType;
 import chemestry.AminoAcid.SecondaryStructure;
 import chemestry.AminoAcid.Type;
 
@@ -277,7 +278,6 @@ public class ChainTree {
 			p4 = points.get(i).asVector();
 			Vector3D v3 = p3.vectorTo(p4);			
 			
-			// TODO why is the cross product in the wrong direction?
 			double a = v2.length() * v1.dot(v2.cross(v3));
 			double b = v1.cross(v2).dot(v2.cross(v3));
 			
@@ -578,6 +578,39 @@ public class ChainTree {
 		this.rotatedBonds.add(i);
 		this.lowestRotatedBond = (i < this.lowestRotatedBond) ? i : this.lowestRotatedBond;
 	}
+	
+	/**
+	 * Sets the dihedral angle around the bond to the specified angle.
+	 * 
+	 * @param i The bond to rotate about.
+	 * @param angle The desired dihedral angle.
+	 */
+	public void setRotationAngle(int i, double angle) {
+		int aminoAcid = this.getAminoAcid(i);
+		BondType bondType = this.getBondType(i);
+		
+		if(aminoAcid == 1 && bondType == BondType.PHI || aminoAcid == this.length() && bondType != BondType.PHI) {
+			throw new IllegalArgumentException("Dihedral angles as nonsense for this bond!");
+		}
+		
+		List<Double> angles = this.getDihedralAngles(aminoAcid, (aminoAcid == this.length()) ? aminoAcid : aminoAcid+1);
+		
+		double currentAngle = Double.NaN;
+		
+		switch(bondType) {
+			case PHI:
+				currentAngle = angles.get(0);
+				break;
+			case PSI:
+				currentAngle = angles.get(1);
+				break;
+			case OMEGA:
+				currentAngle = angles.get(2);
+				break;
+		}
+		
+		this.changeRotationAngle(i, angle-currentAngle);
+	}
 
 	/**
 	 * Unfolds the protein into some, non clashing, confirmation.
@@ -600,7 +633,7 @@ public class ChainTree {
 			for (int bond : this.rotatableBonds()) {
 				double angle = dihedralAngles.get((int) (Math.random() * dihedralAngles.size()));
 				
-				this.changeRotationAngle(bond, angle);
+				this.setRotationAngle(bond, angle);
 			}
 		} while(this.isClashing());
 	}
@@ -749,8 +782,25 @@ public class ChainTree {
 	 * @param aminoAcid The index of the amino acid.
 	 * @return the type of the amino acid.
 	 */
-	public AminoAcid.Type aminoAcidType(int aminoAcid) {
+	public Type getAminoAcidType(int aminoAcid) {
 		return this.proteinInformation.get(aminoAcid-1).x;
+	}
+	
+	/**
+	 * Returns the type of the bond.
+	 * 
+	 * @param bond The bond to get the type of.
+	 * @return The type of the bond.
+	 */
+	public BondType getBondType(int bond) {
+		switch(bond % 3) {
+			case 0: return BondType.PHI;
+			case 1: return BondType.PSI;
+			case 2: return BondType.OMEGA;
+		}
+		
+		// this should never happen
+		throw new IllegalArgumentException("Unknown bond value!");
 	}
 	
 	/**

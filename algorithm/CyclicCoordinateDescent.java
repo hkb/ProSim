@@ -73,7 +73,8 @@ public class CyclicCoordinateDescent {
 			
 			Vector3D r = O.vectorTo(M);
 			Vector3D f = O.vectorTo(F);
-			Vector3D s = r.norm().cross(rotationAxis.x.vectorTo(rotationAxis.y).norm());
+			Vector3D o = rotationAxis.x.vectorTo(rotationAxis.y).norm();
+			Vector3D s = r.norm().cross(o);
 
 			double r2 = 2 * r.length();
 			b += r2 * f.dot(r.norm());
@@ -85,7 +86,8 @@ public class CyclicCoordinateDescent {
 		 */
 		double divisor = Math.sqrt(b*b+c*c);
 		
-		return Math.atan2(c / divisor, b / divisor);
+		// TODO why does the result come off in the opposit direction?
+		return -Math.atan2(c / divisor, b / divisor);
 	}
 	
 	/**

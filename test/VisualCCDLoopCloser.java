@@ -23,7 +23,7 @@ public class VisualCCDLoopCloser {
 		 */
 		String pdbId = "1SIS"; // 1PUX, 1RKI, 1T0G, 1F3U, 1XJH, 1JN1, 1X6J, 2B7T, 1SIS, 1E2B
 		int segmentNo = 1;
-		boolean closeTheHelix = true;
+		boolean closeTheHelix = false;
 		double targetRMSDistance = 0.04;
 		int maxIterations = 10000;
 	
@@ -59,7 +59,9 @@ public class VisualCCDLoopCloser {
 	
 		int i = 0;
 		for (double angle : cTree.getDihedralAngles()) {
-			if (angle != 0.0 && i % 3 != 2) {
+			int aminoAcid = cTree.getAminoAcid(i);
+			
+			if (angle != 0.0 && i % 3 != 2 && !cTree.isInHelix(aminoAcid) && !cTree.isInSheet(aminoAcid)) {
 				dihedralAngles.add(angle);
 			}
 	
@@ -145,7 +147,7 @@ public class VisualCCDLoopCloser {
 			for (int bond : cTree.rotatableBonds()) {
 				if (startBond <= bond && bond <= endBond) {
 					double angle = angles.get((int) (Math.random() * angles.size()));
-					cTree.changeRotationAngle(bond, angle);			
+					cTree.setRotationAngle(bond, angle);			
 				}
 			}
 		} while (cTree.isClashing() || cTree.areClashing(other));
