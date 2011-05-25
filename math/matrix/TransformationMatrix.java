@@ -2,6 +2,9 @@ package math.matrix;
 
 import javax.vecmath.Point3d;
 
+import math.Point3D;
+import math.Tuple3;
+import math.Vector3D;
 import matrix.RotationMatrix4x4;
 import edu.math.Vector;
 
@@ -15,6 +18,7 @@ public class TransformationMatrix {
 	
 	/**
 	 * Create unit transformation matrix.
+	 * @param vector3d 
 	 */
 	public TransformationMatrix() {
 		a11 = 1; a12 = 0; a13 = 0; a14 = 0;
@@ -33,6 +37,17 @@ public class TransformationMatrix {
 		this(1, 0, 0, x, 
 		     0, 1, 0, y, 
 		     0, 0, 1, z);
+	}
+	
+	/**
+	 * Create transformation matrix transformation by some position.
+	 * 
+	 * @param vector
+	 */
+	public TransformationMatrix(Tuple3<Double,Double,Double> vector) {
+		this(1, 0, 0, vector.x, 
+		     0, 1, 0, vector.y, 
+		     0, 0, 1, vector.z);
 	}
 	
 	/**
@@ -198,28 +213,28 @@ public class TransformationMatrix {
 	 * @param v
 	 * @return
 	 */
-	public Vector transform(Vector v) {
-		float x = v.x();
-		float y = v.y();
-		float z = v.z();
+	public Vector3D transform(Vector3D vector) {
+		double x = vector.x;
+		double y = vector.y;
+		double z = vector.z;
 		
-		return new Vector(a11*x + a12*y + a13*z + a14, 
-						  a21*x + a22*y + a23*z + a24,
-						  a31*x + a32*y + a33*z + a34);
+		return new Vector3D(a11*x + a12*y + a13*z + a14, 
+						    a21*x + a22*y + a23*z + a24,
+						    a31*x + a32*y + a33*z + a34);
 	}
 	
-	public Point3d transform(Point3d v) {
-		double x = v.x;
-		double y = v.y;
-		double z = v.z;
+	public Point3D transform(Point3D point) {
+		double x = point.x;
+		double y = point.y;
+		double z = point.z;
 		
-		return new Point3d(a11*x + a12*y + a13*z + a14, 
+		return new Point3D(a11*x + a12*y + a13*z + a14, 
   						   a21*x + a22*y + a23*z + a24,
 						   a31*x + a32*y + a33*z + a34);
 	}
 	
-	public Point3d getPosition() {
-		return new Point3d(this.a14, this.a24, this.a34);
+	public Point3D getPosition() {
+		return new Point3D(this.a14, this.a24, this.a34);
 	}
 	
 	@Override

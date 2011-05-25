@@ -17,15 +17,27 @@ import edu.geom3D.Capsule;
 
 public class VisualChainTreeDebugger {
 	public static void main(String[] args) {
-		File[] listOfFiles = new File("/home/hkb/.workspace/ProSim/pdb_files").listFiles();
-		String pdbId = listOfFiles[(int)(Math.random() * listOfFiles.length)].getName().substring(0,4);
-		System.out.println(pdbId);
-		//String pdbId = "1T0G";
+		/*
+		ChainTree cTree = null;
+		
+		do {
+			try {
+				File[] listOfFiles = new File("/home/hkb/workspace/ProSim/pdb_files").listFiles();
+				String pdbId = listOfFiles[(int)(Math.random() * listOfFiles.length)].getName().substring(0,4);
+				System.out.println(pdbId);
+				//String pdbId = "2QMT";
 			
+				//
+				cTree = new AdjustableChainTree(pdbId);
+				System.out.println(cTree.length());
+			} catch (Throwable e) {
+				System.err.println(e);
+				continue;
+			}
+		} while(cTree == null || cTree.length() > 80 || cTree.getSheetSegments().size() == 0 || cTree.getHelixSegments().size() == 0);
+		*/
 		
-		//
-		ChainTree cTree = new AdjustableChainTree(pdbId);
-		
+		ChainTree cTree = new AdjustableChainTree("2QMT");
 		
 		//showBinaryTreeStructure(cTree);
 		showProtein(cTree);

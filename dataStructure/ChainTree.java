@@ -142,6 +142,10 @@ public class ChainTree {
 		
 		// when only on node in the current level then store it as the root
 		this.root = currentLevel.get(0);
+		
+		// lock the end leafs as rotation about them is nonsense
+		this.backboneBonds[0].isLocked = true;
+		this.backboneBonds[this.backboneBonds.length-1].isLocked = true;
 	}	
 	
 	
@@ -161,7 +165,7 @@ public class ChainTree {
 	 * @return Number of amino acids.
 	 */
 	public int length() {
-		return this.proteinInformation.size();
+		return (this.backboneBonds.length / 3)+1;
 	}
 	
 	/**
@@ -351,7 +355,6 @@ public class ChainTree {
 		}
 		
 		// go down from ancestor to the bonds while building the transformation matrix
-		// TODO understand this section!!
 		TransformationMatrix transformationMatrix = new TransformationMatrix();
 		CTNode node;
 		
@@ -412,6 +415,8 @@ public class ChainTree {
 	 * @param node2 A node to check for overlap.
 	 * @return true if there is a clash else false
 	 */
+	public CTNode l1 = null;
+	public CTNode l2 = null;
 	private boolean isClashing(CTNode left, CTNode right) {
 		
 		// NOTE: This is a purely technical check to avoid double check of the same subtrees
@@ -446,8 +451,11 @@ public class ChainTree {
 			return false;
 		
 		// if leaves then report clash
-		if (left.isLeaf() && right.isLeaf())
+		if (left.isLeaf() && right.isLeaf()) {
+			this.l1 = left;
+			this.l2 = right;
 			return true;
+		}
 		
 		// continue search
 		if(left.isLeaf()) {
@@ -694,6 +702,9 @@ public class ChainTree {
 	 * @param i The sequence number of the amino acid.
 	 */
 	public boolean isInHelix(int aminoAcid) {
+		if(this.proteinInformation == null)
+			return false;
+		
 		return this.proteinInformation.get(aminoAcid-1).y == SecondaryStructure.HELIX;
 	}
 	
@@ -703,6 +714,9 @@ public class ChainTree {
 	 * @param i The sequence number of the amino acid.
 	 */
 	public boolean isInSheet(int aminoAcid) {
+		if(this.proteinInformation == null)
+			return false;
+		
 		return this.proteinInformation.get(aminoAcid-1).y == SecondaryStructure.SHEET;
 	}
 	

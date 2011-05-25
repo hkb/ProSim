@@ -318,7 +318,7 @@ public class AdjustableChainTree extends ChainTree {
 			}
 		}
 		
-		// go down right to rotate the tree to only contain the specified sub chain
+		// the go up from right to rotate the tree to only contain the specified sub chain
 		node = right;
 		
 		while (node.low > i) {
@@ -349,19 +349,11 @@ public class AdjustableChainTree extends ChainTree {
 		CTNode a = node.right;
 		CTNode b = node;
 		CTNode d = a.left;
-	
-		// update sub chain information
-		a.low = b.low;
-		b.high = d.high;
-	
-		// compute new rotation matrix
-		a.transformationMatrix = b.transformationMatrix;
-		b.transformationMatrix = new TransformationMatrix(b.left.transformationMatrix, d.transformationMatrix);
-		
+
 		// rotate tree nodes
 		a.left = b;
 		a.parent = b.parent;
-		
+
 		if (a.parent == null) {
 			super.root = a;
 		} else {
@@ -371,11 +363,15 @@ public class AdjustableChainTree extends ChainTree {
 				b.parent.right = a;
 			}node.update();
 		}
-		
+
 		b.right = d;
 		b.parent = a;
 		d.parent = b;
-		
+
+		// update sub chain information
+		a.low = b.low;
+		b.high = d.high;
+
 		// update nodes above the rotated subtree
 		// starts from d as both a and b are ancestors to d
 		node = d.parent;
@@ -396,19 +392,11 @@ public class AdjustableChainTree extends ChainTree {
 		CTNode a = node;
 		CTNode b = node.left;
 		CTNode d = b.right;
-	
-		// update sub chain information
-		b.high = a.high;
-		a.low = d.low;
-	
-		// compute new rotation matrix
-		b.transformationMatrix = a.transformationMatrix;
-		a.transformationMatrix = new TransformationMatrix(d.transformationMatrix, a.right.transformationMatrix);
-		
+
 		// rotate tree nodes
 		b.right = a;
 		b.parent = a.parent;
-		
+
 		if (b.parent == null) {
 			super.root = b;
 		} else {
@@ -418,11 +406,15 @@ public class AdjustableChainTree extends ChainTree {
 				node.parent.right = b;
 			}
 		}
-		
+
 		a.left = d;
 		a.parent = b;
 		d.parent = a;
-		
+
+		// update sub chain information
+		b.high = a.high;
+		a.low = d.low;
+
 		// update nodes above the rotated subtree
 		// starts from d as both a and b are ancestors to d
 		node = d.parent;

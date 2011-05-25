@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import test.VisualChainTreeDebugger;
 import tool.ChainTreeScene;
 import dataStructure.AdjustableChainTree;
 import dataStructure.ChainTree;
@@ -52,10 +53,16 @@ public class MonteCarloSimulation {
 			double angle = (Math.random()-0.5)*15*(Math.PI/180);
 			
 			cTree.changeRotationAngle(i, angle);
+			scene.repaint();
+			Thread.sleep(50);
 			
 			if(cTree.isClashing()) {
 				// undo move if tree is clashing
-				cTree.changeRotationAngle(i, -angle);	
+				//cTree.changeRotationAngle(i, -angle);
+				VisualChainTreeDebugger.paintBoundingVolume(cTree, cTree.l1, scene);
+				VisualChainTreeDebugger.paintBoundingVolume(cTree, cTree.l2, scene);
+				scene.repaint();
+				break;
 				
 			} else {
 				// if not clashing then test for energy efficiency

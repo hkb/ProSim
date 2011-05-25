@@ -11,6 +11,7 @@ import geom3d.Capsule3d;
 
 
 import math.Point3D;
+import math.Vector3D;
 import math.matrix.TransformationMatrix;
 
 
@@ -107,14 +108,22 @@ public class LinesegmentSweptSphere implements BoundingVolume {
 	}
 
 	@Override
-	public BoundingVolume transform(TransformationMatrix transformationMatrix) {
-		return new LinesegmentSweptSphere(new Capsule(transformationMatrix.transform(this.volume.p1),
-													  transformationMatrix.transform(this.volume.p2),
+	public BoundingVolume transform(TransformationMatrix transformationMatrix) {		
+		return new LinesegmentSweptSphere(new Capsule(vector3DToVector(transformationMatrix.transform(this.vectorToVector3D(this.volume.p1))),
+													  vector3DToVector(transformationMatrix.transform(this.vectorToVector3D(this.volume.p2))),
 				                                      this.volume.rad));
 	}
 
 	@Override
 	public String toString() {
 		return this.volume.toString();
+	}
+	
+	private Vector3D vectorToVector3D(Vector vector) {
+		return new Vector3D((double) vector.x(), (double) vector.y(), (double) vector.z());
+	}
+	
+	private Vector vector3DToVector(Vector3D vector) {
+		return new Vector(vector.x, vector.y, vector.z);
 	}
 }
