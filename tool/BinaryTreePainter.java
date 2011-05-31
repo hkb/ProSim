@@ -24,13 +24,19 @@ public class BinaryTreePainter extends JFrame{
 	public J3DScene scene;
 	private PaintPane pp;
 	
+	
 	public BinaryTreePainter(ChainTree cTree) {
+		this(cTree.getRoot());
+	}
+	
+	public BinaryTreePainter(CTNode node) {		
 		super("ChainTree painter");
 		super.setSize(600,500);
 		
 		setup();
-		setRoot(new Node(cTree.getRoot()));
+		setRoot(new Node(node));
 		super.setVisible(true);
+		super.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
 	/**
@@ -61,12 +67,12 @@ public class BinaryTreePainter extends JFrame{
 
 		@Override
 		public Color getLegColor() {
-			return this.node.isLocked ? Color.RED : Color.BLACK;
+			return this.node.active ? Color.GREEN : this.node.isLocked ? Color.RED : Color.BLACK;
 		}
 
 		@Override
 		public Color getNodeColor() {
-			return this.node.isLocked ? Color.RED : Color.BLACK;
+			return this.node.active ? Color.GREEN : this.node.isLocked ? Color.RED : Color.BLACK;
 		}
 
 		@Override

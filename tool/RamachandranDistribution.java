@@ -77,6 +77,34 @@ public class RamachandranDistribution {
 		return this.singleProbabilities[AminoAcid.typeToInt(aminoAcid)][toBin(radianToDegree(phi))][toBin(radianToDegree(psi))];
 	}
 	
+	public Tuple2<Double,Double> purposeAngle(AminoAcid.Type aminoAcid, AminoAcid.Type leftNeighbour, AminoAcid.Type rightNeighbour) {
+		// http://en.wikipedia.org/wiki/Rejection_sampling
+		double phi = 0;
+		double psi = 0;
+		
+		do {
+			phi = (Math.random() - 0.5) * Math.PI;
+			psi = (Math.random() - 0.5) * Math.PI;
+			
+		} while(Math.random() < this.probability(aminoAcid, leftNeighbour, rightNeighbour, phi, psi));
+		
+		return new Tuple2<Double,Double>(phi, psi);
+	}
+	
+	public Tuple2<Double,Double> purposeAngle(AminoAcid.Type aminoAcid) {
+		// http://en.wikipedia.org/wiki/Rejection_sampling
+		double phi = 0;
+		double psi = 0;
+		
+		do {
+			phi = (Math.random() - 0.5) * Math.PI;
+			psi = (Math.random() - 0.5) * Math.PI;
+			
+		} while(Math.random() < this.probability(aminoAcid, phi, psi));
+		
+		return new Tuple2<Double,Double>(phi, psi);
+	}
+	
 	private static double radianToDegree(double radian) {
 		return radian * RADIAN_TO_DEGREE_FACTOR;
 	}

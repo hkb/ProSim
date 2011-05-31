@@ -7,6 +7,8 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import tool.BinaryTreePainter;
+
 import math.Point3D;
 import math.Tuple2;
 import math.matrix.TransformationMatrix;
@@ -218,7 +220,7 @@ public class AdjustableChainTree extends ChainTree {
 	private void rebalance() {
 		this.toggleLockedSubtreeVisibility(false);
 		this.rebalanceSubtree(this.root);
-		this.toggleLockedSubtreeVisibility(true);
+		//this.toggleLockedSubtreeVisibility(true);
 	}
 	
 	/**
@@ -240,52 +242,42 @@ public class AdjustableChainTree extends ChainTree {
 		}
 	}
 	
+	
 	private void rebalanceNode(CTNode node) {
 		CTNode a = node;
 		CTNode b = a.left;
 		CTNode c = a.right;
 		
-		// left tree (b) is more that 1 higher so we must re-balance
-		if (b.height - c.height > 1) {
+		// do the subtrees heights differ enough for an rotation?
+		if(Math.abs(b.height - c.height) < 2)
+			return;
+		
+		// left subtree is the highest
+		if (b.height > c.height) {
 			CTNode d = b.left;
 			CTNode e = b.right;
 			
 			if (d.height >= e.height) {
-				// perform double rotation
 				this.rotateRight(a);
-				
-				this.rebalanceNode(a);
-				this.rebalanceNode(b);
 			} else {
-				// perform single rotation
 				this.rotateLeft(b);
 				this.rotateRight(a);
-				
-				this.rebalanceNode(a);
-				this.rebalanceNode(e);
 			}
-		}
-		
-		// right tree (c) is more than 1 higher so we must re-balance
-		if (c.height - b.height > 1) {
+			
+		// right subtree is the highest
+		} else {
 			CTNode d = c.left;
 			CTNode e = c.right;
 			
 			if (e.height >= d.height) {
-				// perform double rotation
 				this.rotateLeft(a);
-				
-				this.rebalanceNode(a);
-				this.rebalanceNode(c);
 			} else {
-				// perform single rotation
 				this.rotateRight(c);
 				this.rotateLeft(a);
-				
-				this.rebalanceNode(a);
-				this.rebalanceNode(d);
 			}
 		}
+		
+		this.rebalanceNode(a);
 	}
 	
 	/**

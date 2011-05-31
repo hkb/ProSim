@@ -38,9 +38,10 @@ public class VisualChainTreeDebugger {
 		*/
 		
 		ChainTree cTree = new AdjustableChainTree("2QMT");
+		System.out.println("HEJ");
 		
-		//showBinaryTreeStructure(cTree);
-		showProtein(cTree);
+		showBinaryTreeStructure(cTree);
+		//showProtein(cTree);
 		//showBoundingVolumes(cTree);
 		
 		// paint single volume

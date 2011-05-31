@@ -13,7 +13,7 @@ public class CTNode {
 	public int low, high;								// the lowest and highest covered backbone bond
 
 	public boolean isLocked = false;					// is this node locked?
-	
+	public boolean active = false;
 	
 	/**
 	 * Creates a new node from its children.
@@ -94,7 +94,7 @@ public class CTNode {
 	
 	@Override
 	public String toString() {
-		return ""+this.height;
+		return "";//+this.height;
 	}
 
 }

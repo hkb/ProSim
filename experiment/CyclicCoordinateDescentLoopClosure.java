@@ -39,7 +39,7 @@ import energyFunction.LoopAtomDistance;
 public class CyclicCoordinateDescentLoopClosure {
 	
 	private static enum FoldingRestriction {NONE, NEIGHBOUR_INDEPENDENT, NEIGHBOUR_DEPENDENT};
-	private static enum UnfoldingRestriction {NONE, NATURAL, NATURAL_ANGLES_ONLY};
+	private static enum UnfoldingRestriction {NONE, NEIGHBOUR_INDEPENDENT, NEIGHBOUR_DEPENDENT, NEIGHBOUR_INDEPENDENT_NO_CLASH, NEIGHBOUR_DEPENDENT_NO_CLASH, FROM_PROTEIN};
 	private static RamachandranDistribution ramachandranDistribution = new RamachandranDistribution();
 	private static ChainTreeScene scene = null;//new ChainTreeScene();
 	private static Profiler profiler = new Profiler();
@@ -63,6 +63,7 @@ public class CyclicCoordinateDescentLoopClosure {
 	
 		
 	public static void main(String[] args) throws Exception {
+		
 		
 		/**
 		 * Thread for folding all loops in a single protein.
@@ -269,11 +270,11 @@ public class CyclicCoordinateDescentLoopClosure {
 		
 		// generate unfold conformations
 		AdjustableChainTree cTreeLoopCopy = cTreeLoop.getSubchain(1, cTreeLoop.length());
-		
-		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.NATURAL, UnfoldingRestriction.NATURAL_ANGLES_ONLY}) {
+
+		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT_NO_CLASH, UnfoldingRestriction.NEIGHBOUR_DEPENDENT, UnfoldingRestriction.NEIGHBOUR_DEPENDENT_NO_CLASH, UnfoldingRestriction.FROM_PROTEIN}) {
 			Collection<List<Tuple2<Integer,Tuple2<Double,Double>>>> conformations = generateConformations(cTreeLoopCopy, cTreeRemainder, phiPsiPairs, start, end, unfolding);
 			
-			for(FoldingRestriction restriction : new FoldingRestriction[]{FoldingRestriction.NONE, FoldingRestriction.NEIGHBOUR_INDEPENDENT, FoldingRestriction.NEIGHBOUR_DEPENDENT}) {
+			for(FoldingRestriction restriction : new FoldingRestriction[]{FoldingRestriction.NONE}) {
 				int itterations = 0;
 				int unclosed = 0;
 				int clashes = 0;
@@ -404,8 +405,12 @@ public class CyclicCoordinateDescentLoopClosure {
 					
 					if(restriction == UnfoldingRestriction.NONE) {
 						angles = new Tuple2<Double,Double>(Math.random()*Math.PI*2, Math.random()*Math.PI*2);
-					} else {
+					} else if (restriction == UnfoldingRestriction.FROM_PROTEIN) {
 						angles = phiPsiPairs.get((int) (Math.random() * phiPsiPairs.size()));
+					} else if (restriction == UnfoldingRestriction.NEIGHBOUR_INDEPENDENT || restriction == UnfoldingRestriction.NEIGHBOUR_INDEPENDENT_NO_CLASH) {
+						angles = ramachandranDistribution.purposeAngle(cTree.getAminoAcidType(cTree.getAminoAcid(i)));
+					} else {
+						angles = ramachandranDistribution.purposeAngle(cTree.getAminoAcidType(cTree.getAminoAcid(i)), cTree.getAminoAcidType(cTree.getAminoAcid(i-1)), cTree.getAminoAcidType(cTree.getAminoAcid(i+1)));
 					}
 				
 					cTree.setRotationAngle(cTree.getPhi(i), angles.x);
@@ -414,7 +419,7 @@ public class CyclicCoordinateDescentLoopClosure {
 					conformation.add(new Tuple2<Integer,Tuple2<Double,Double>>(i, angles));
 				}
 			}
-		} while (restriction == UnfoldingRestriction.NATURAL && (cTree.isClashing() || cTree.areClashing(other)));
+		} while ((restriction == UnfoldingRestriction.NEIGHBOUR_INDEPENDENT_NO_CLASH || restriction == UnfoldingRestriction.NEIGHBOUR_DEPENDENT_NO_CLASH) && (cTree.isClashing() || cTree.areClashing(other)));
 		
 		return conformation;
 	}
