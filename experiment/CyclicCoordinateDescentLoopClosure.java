@@ -64,6 +64,11 @@ public class CyclicCoordinateDescentLoopClosure {
 		
 	public static void main(String[] args) throws Exception {
 		
+		output = new FileWriter("/home/hkb/tmp.tsv");
+		
+		closeAllLoops("1PUX");
+		closeAllLoops("1E2B");
+		closeAllLoops("1QDD");
 		
 		/**
 		 * Thread for folding all loops in a single protein.
@@ -102,7 +107,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		/*
 		 * Close all loops.
 		 */
-		
+		/*
 		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/latest-all-loop-experiment.tsv");
 		
 		List<String> pdbIds = new LinkedList<String>(Arrays.asList(sheetDominantPDBs));
@@ -121,7 +126,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		output.close();
 		
 		System.out.println("Done with all loops.");
-		
+		*/
 		
 		
 		/*
@@ -272,7 +277,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		// generate unfold conformations
 		AdjustableChainTree cTreeLoopCopy = cTreeLoop.getSubchain(1, cTreeLoop.length());
 
-		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT_NO_CLASH, UnfoldingRestriction.NEIGHBOUR_DEPENDENT, UnfoldingRestriction.NEIGHBOUR_DEPENDENT_NO_CLASH, UnfoldingRestriction.FROM_PROTEIN}) {
+		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.FROM_PROTEIN, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT, UnfoldingRestriction.NEIGHBOUR_DEPENDENT}) {
 			Collection<List<Tuple2<Integer,Tuple2<Double,Double>>>> conformations = generateConformations(cTreeLoopCopy, cTreeRemainder, phiPsiPairs, start, end, unfolding);
 			
 			for(FoldingRestriction restriction : new FoldingRestriction[]{FoldingRestriction.NONE, FoldingRestriction.NEIGHBOUR_INDEPENDENT, FoldingRestriction.NEIGHBOUR_DEPENDENT}) {

@@ -37,11 +37,11 @@ public class VisualChainTreeDebugger {
 		} while(cTree == null || cTree.length() > 80 || cTree.getSheetSegments().size() == 0 || cTree.getHelixSegments().size() == 0);
 		*/
 		
-		ChainTree cTree = new AdjustableChainTree("2QMT");
-		System.out.println("HEJ");
+		ChainTree cTree = new AdjustableChainTree("1QDD");
+	
 		
-		showBinaryTreeStructure(cTree);
-		//showProtein(cTree);
+		//showBinaryTreeStructure(cTree);
+		showProtein(cTree);
 		//showBoundingVolumes(cTree);
 		
 		// paint single volume

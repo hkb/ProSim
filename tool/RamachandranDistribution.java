@@ -86,7 +86,7 @@ public class RamachandranDistribution {
 			phi = (Math.random() - 0.5) * Math.PI;
 			psi = (Math.random() - 0.5) * Math.PI;
 			
-		} while(Math.random() < this.probability(aminoAcid, leftNeighbour, rightNeighbour, phi, psi));
+		} while(Math.random() >= this.probability(aminoAcid, leftNeighbour, rightNeighbour, phi, psi));
 		
 		return new Tuple2<Double,Double>(phi, psi);
 	}
@@ -100,7 +100,7 @@ public class RamachandranDistribution {
 			phi = (Math.random() - 0.5) * Math.PI;
 			psi = (Math.random() - 0.5) * Math.PI;
 			
-		} while(Math.random() < this.probability(aminoAcid, phi, psi));
+		} while(Math.random() >= this.probability(aminoAcid, phi, psi));
 		
 		return new Tuple2<Double,Double>(phi, psi);
 	}
