@@ -220,7 +220,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		for(int i = 1; i < segments.size()-1; i++) { // segment must be minimum 4 residues long
 			Tuple2<Integer, Integer> segment = segments.get(i);
 			
-			if(segmentLength(segment.x, segment.y) >= 4) {	
+			if(segmentLength(segment.x, segment.y) >= 4 && segmentLength(segment.x, segment.y) <= 14) {	
 				closeLoop(pdbId, cTree, segment.x, segment.y);
 			}
 		}
