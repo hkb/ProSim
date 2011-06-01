@@ -50,11 +50,11 @@ public class CyclicCoordinateDescentLoopClosure {
 	 */
 	private static String[] sheetDominantPDBs = {"1PUX","1E2B","2YS4","1QDD","1O26","2OV0","1Z0J","2G1E","1X45","1TRE","2GCX","2COF","1BUJ",
 												 "1JFM","1MDC","2JPH","1UC6","1E2B","1ZRI","1MKB","1QA7","2PND","1HX7","1YH5","1P9K",
-												 "1RQW","1O26","2JZR","1WEY","2YZ0","1XHJ","1QTW","1GO0"};
+												 "1O26","2JZR","1WEY","2YZ0","1XHJ","1QTW","1GO0"};
 	
 	private static String[] nonSheetDominantPDBs = {"1T0G","2J3L","1M4J","1K7C","1TI8","1UW0","1SPK","2CSK","1VZI", "2DNE","2DAO","1H6X","1AYJ",
 													"1YO4","2E2F","1WGV","2H41","2A7R","1LTG","1Z5F","1TIZ","1HUX","2A7R","1FSG","1B1A","2RDQ",
-													"2V1N","2Z9H","1H6Q","1IXH","2OLM","2PRF","1KUF","2BYE"};
+													"2V1N","2Z9H","1H6Q","1IXH","2PRF","1KUF","2BYE"};
 	
 	private static double TARGET_RMSD = 0.08;
 	private static int MAX_ITERATIONS_PER_CLOSE = 5000;
@@ -127,7 +127,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		/*
 		 * Close all central beta sheets.
 		 */
-		
+		/*
 		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/latest-central-betasheet-experiment.tsv");
 		
 		
@@ -144,12 +144,13 @@ public class CyclicCoordinateDescentLoopClosure {
 		output.close();
 		
 		System.out.println("Done with sheet dominant proteins.");
-		
+		*/
 		
 		
 		/*
 		 * Close all non-central beta sheets.
 		 */
+		/*
 		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/latest-non-central-betasheet-experiment.tsv");
 		
 		for(String pdbId : nonSheetDominantPDBs) {
@@ -165,7 +166,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		output.close();
 		
 		System.out.println("Done with non sheet dominant proteins.");
-		
+		*/
 		System.out.println("TOTALLY DONE!");
 	}
 	

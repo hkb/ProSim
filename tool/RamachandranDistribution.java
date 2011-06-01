@@ -68,9 +68,9 @@ public class RamachandranDistribution {
 	
 	public double probability(AminoAcid.Type aminoAcid, AminoAcid.Type leftNeighbour, AminoAcid.Type rightNeighbour, double phi, double psi) {
 		double left = this.leftNeightbour[AminoAcid.typeToInt(aminoAcid)][AminoAcid.typeToInt(leftNeighbour)][toBin(radianToDegree(phi))][toBin(radianToDegree(psi))];
-		double right = this.leftNeightbour[AminoAcid.typeToInt(aminoAcid)][AminoAcid.typeToInt(rightNeighbour)][toBin(radianToDegree(phi))][toBin(radianToDegree(psi))];
+		double right = this.rightNeightbour[AminoAcid.typeToInt(aminoAcid)][AminoAcid.typeToInt(rightNeighbour)][toBin(radianToDegree(phi))][toBin(radianToDegree(psi))];
 		
-		return (left + right) / 2;
+		return left * right;
 	}
 	
 	public double probability(AminoAcid.Type aminoAcid, double phi, double psi) {		
