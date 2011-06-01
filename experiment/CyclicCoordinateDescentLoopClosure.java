@@ -275,7 +275,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT_NO_CLASH, UnfoldingRestriction.NEIGHBOUR_DEPENDENT, UnfoldingRestriction.NEIGHBOUR_DEPENDENT_NO_CLASH, UnfoldingRestriction.FROM_PROTEIN}) {
 			Collection<List<Tuple2<Integer,Tuple2<Double,Double>>>> conformations = generateConformations(cTreeLoopCopy, cTreeRemainder, phiPsiPairs, start, end, unfolding);
 			
-			for(FoldingRestriction restriction : new FoldingRestriction[]{FoldingRestriction.NONE}) {
+			for(FoldingRestriction restriction : new FoldingRestriction[]{FoldingRestriction.NONE, FoldingRestriction.NEIGHBOUR_INDEPENDENT, FoldingRestriction.NEIGHBOUR_DEPENDENT}) {
 				int itterations = 0;
 				int unclosed = 0;
 				int clashes = 0;
