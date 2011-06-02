@@ -2,8 +2,11 @@ package test;
 
 import java.awt.Color;
 import java.io.File;
+import java.util.List;
 
 import javax.media.j3d.BadTransformException;
+
+import math.Tuple2;
 
 import boundingVolume.LinesegmentSweptSphere;
 import geom3d.Capsule3d;
@@ -17,8 +20,9 @@ import edu.geom3D.Capsule;
 
 public class VisualChainTreeDebugger {
 	public static void main(String[] args) {
-		/*
-		ChainTree cTree = null;
+		
+		AdjustableChainTree cTree = null;
+		int c = 0;
 		
 		do {
 			try {
@@ -29,15 +33,29 @@ public class VisualChainTreeDebugger {
 			
 				//
 				cTree = new AdjustableChainTree(pdbId);
-				System.out.println(cTree.length());
 			} catch (Throwable e) {
 				System.err.println(e);
 				continue;
 			}
-		} while(cTree == null || cTree.length() > 80 || cTree.getSheetSegments().size() == 0 || cTree.getHelixSegments().size() == 0);
-		*/
+			
+			c = 0;
+			int i = 0;
+			List<Tuple2<Integer,Integer>> segments = cTree.getIntermediateSegments();
+			for(Tuple2<Integer,Integer> segment : segments) {
+				int length = segment.y - segment.x + 1;
+				if(i > 0 && i < segments.size()-1 && 12 <= length && length <= 14) 
+					c++;
+				i++;
+			}
+			
+		} while(cTree == null || c < 1 || (cTree.getSheetSegments().size() == 0 && cTree.getHelixSegments().size() == 0));// || cTree.length() > 80 || cTree.getSheetSegments().size() == 0 || cTree.getHelixSegments().size() == 0);
 		
-		ChainTree cTree = new AdjustableChainTree("1QDD");
+		
+		//AdjustableChainTree cTree = new AdjustableChainTree("1QDD");
+		for(Tuple2<Integer,Integer> segment : cTree.getIntermediateSegments()) {
+			System.out.println(segment.y - segment.x + 1);
+		}		
+
 	
 		
 		//showBinaryTreeStructure(cTree);
