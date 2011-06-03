@@ -37,7 +37,7 @@ public class VisualChainTreeDebugger {
 		} while(cTree == null || cTree.length() > 80 || cTree.getSheetSegments().size() == 0 || cTree.getHelixSegments().size() == 0);
 		*/
 		
-		ChainTree cTree = new AdjustableChainTree("1QDD");
+		ChainTree cTree = new AdjustableChainTree("1MKB");
 	
 		
 		//showBinaryTreeStructure(cTree);
