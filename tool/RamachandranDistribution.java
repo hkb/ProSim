@@ -24,7 +24,7 @@ public class RamachandranDistribution {
 	private Double[][][] singleProbabilities = new Double[AminoAcid.count][360/5][360/5];
 		
 	public RamachandranDistribution() {
-		this("/home/hkb/data/bachelor/Neighbor-dependent Ramachandran Distributions/NDRD_TCBIG.txt");
+		this("/home/hkb/data/bachelor/Neighbor-dependent Ramachandran Distributions/NDRD_TCB.txt");
 	}
 	
 	public RamachandranDistribution(String dataFile) {
@@ -37,23 +37,23 @@ public class RamachandranDistribution {
 				if(strLine.length() > 0 && strLine.charAt(0) != '#') {
 					String[] tokens = strLine.split("\\s+");
 					
-					if(tokens[0].equals("CPR") || tokens[2].equals("CPR"))
+					if(tokens.length == 0 || tokens[0].equals("CPR") || tokens[2].equals("CPR"))
 						continue;
 					
+					AminoAcid.Type aminoAcid = AminoAcid.Type.valueOf(tokens[0]);
+					int phi = Integer.valueOf(tokens[3]);
+					int psi = Integer.valueOf(tokens[4]);
+					double probability = Double.valueOf(tokens[5]);
+					
 					if (tokens[2].equals("ALL")) {
-						AminoAcid.Type aminoAcid = AminoAcid.Type.valueOf(tokens[0]);
-						int phi = Integer.valueOf(tokens[3]);
-						int psi = Integer.valueOf(tokens[4]);
-						double probability = Double.valueOf(tokens[5]);
-
-						this.singleProbabilities[AminoAcid.typeToInt(aminoAcid)][toBin(phi)][toBin(psi)] = probability;
+						if(this.singleProbabilities[AminoAcid.typeToInt(aminoAcid)][toBin(phi)][toBin(psi)] == null) {
+							this.singleProbabilities[AminoAcid.typeToInt(aminoAcid)][toBin(phi)][toBin(psi)] = probability;
+						} else {
+							this.singleProbabilities[AminoAcid.typeToInt(aminoAcid)][toBin(phi)][toBin(psi)] += probability;
+							this.singleProbabilities[AminoAcid.typeToInt(aminoAcid)][toBin(phi)][toBin(psi)] /= 2;
+						}
 					} else {
-						
-						AminoAcid.Type aminoAcid = AminoAcid.Type.valueOf(tokens[0]);
 						AminoAcid.Type neightbourAcid = AminoAcid.Type.valueOf(tokens[2]);
-						int phi = Integer.valueOf(tokens[3]);
-						int psi = Integer.valueOf(tokens[4]);
-						double probability = Double.valueOf(tokens[5]);
 						
 						Double[][][][] neightbour = (tokens[1].equals("left")) ? this.leftNeightbour : this.rightNeightbour;
 	
@@ -62,7 +62,7 @@ public class RamachandranDistribution {
 				}
 			}
 		} catch (Exception e){
-			System.err.println("Error: " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 	
@@ -70,7 +70,7 @@ public class RamachandranDistribution {
 		double left = this.leftNeightbour[AminoAcid.typeToInt(aminoAcid)][AminoAcid.typeToInt(leftNeighbour)][toBin(radianToDegree(phi))][toBin(radianToDegree(psi))];
 		double right = this.rightNeightbour[AminoAcid.typeToInt(aminoAcid)][AminoAcid.typeToInt(rightNeighbour)][toBin(radianToDegree(phi))][toBin(radianToDegree(psi))];
 		
-		return left * right;
+		return (left * right) / this.probability(aminoAcid, phi, psi);
 	}
 	
 	public double probability(AminoAcid.Type aminoAcid, double phi, double psi) {		
@@ -81,12 +81,15 @@ public class RamachandranDistribution {
 		// http://en.wikipedia.org/wiki/Rejection_sampling
 		double phi = 0;
 		double psi = 0;
+		double p;
 		
 		do {
-			phi = (Math.random() - 0.5) * Math.PI;
-			psi = (Math.random() - 0.5) * Math.PI;
+			phi = (Math.random() - 0.5) * Math.PI * 2;
+			psi = (Math.random() - 0.5) * Math.PI * 2;
 			
-		} while(Math.random() >= this.probability(aminoAcid, leftNeighbour, rightNeighbour, phi, psi));
+			p = this.probability(aminoAcid, leftNeighbour, rightNeighbour, phi, psi);
+			
+		} while(Math.random() >= p);
 		
 		return new Tuple2<Double,Double>(phi, psi);
 	}
@@ -95,13 +98,16 @@ public class RamachandranDistribution {
 		// http://en.wikipedia.org/wiki/Rejection_sampling
 		double phi = 0;
 		double psi = 0;
+		double p;
 		
 		do {
-			phi = (Math.random() - 0.5) * Math.PI;
-			psi = (Math.random() - 0.5) * Math.PI;
+			phi = (Math.random() - 0.5) * Math.PI * 2;
+			psi = (Math.random() - 0.5) * Math.PI * 2;
 			
-		} while(Math.random() >= this.probability(aminoAcid, phi, psi));
-		
+			p = this.probability(aminoAcid, phi, psi);
+			
+		} while(Math.random() >= p);
+
 		return new Tuple2<Double,Double>(phi, psi);
 	}
 	

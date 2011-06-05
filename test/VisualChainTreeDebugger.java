@@ -20,11 +20,8 @@ import edu.geom3D.Capsule;
 
 public class VisualChainTreeDebugger {
 	public static void main(String[] args) {
-
 		AdjustableChainTree cTree = new AdjustableChainTree("1E2B");		
-
 	
-		
 		//showBinaryTreeStructure(cTree);
 		showProtein(cTree);
 		//showBoundingVolumes(cTree);

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -63,16 +64,12 @@ public class CyclicCoordinateDescentLoopClosure {
 	private static int MAX_ITERATIONS_PER_CLOSE = 5000;
 	private static int NUMBER_OF_TRIAL_LOOPS = 100;
 	
+	private static int MAX_THREADS = 2;
+	
 	
 		
 	public static void main(String[] args) throws Exception {
-		
-		output = new FileWriter("/home/hkb/tmp.tsv");
-		
-		closeAllLoops("1PUX");
-		closeAllLoops("1E2B");
-		closeAllLoops("1QDD");
-		
+				
 		/**
 		 * Thread for folding all loops in a single protein.
 		 */
@@ -115,15 +112,24 @@ public class CyclicCoordinateDescentLoopClosure {
 		
 		List<String> pdbIds = new LinkedList<String>(Arrays.asList(sheetDominantPDBs));
 		pdbIds.addAll(Arrays.asList(nonSheetDominantPDBs));
+		//Collections.shuffle(pdbIds);
 		
-		for(String pdbId : pdbIds) {
+		for(String pdbId : pdbIds) {			
 			Thread thread = new Thread(new LoopCloser(pdbId));
 			thread.start();
 			threads.add(thread);
+			
+			if(threads.size() >= MAX_THREADS) {
+				thread = threads.get(0);
+				thread.join();
+				threads.remove(0);
+			}
 		}
 		
-		for(Thread thread : threads) {
+		while(threads.size() > 0) {
+			Thread thread = threads.get(0);
 			thread.join();
+			threads.remove(0);
 		}
 		
 		output.close();
@@ -135,7 +141,7 @@ public class CyclicCoordinateDescentLoopClosure {
 		/*
 		 * Close all central beta sheets.
 		 */
-		/*
+		
 		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/latest-central-betasheet-experiment.tsv");
 		
 		
@@ -143,38 +149,54 @@ public class CyclicCoordinateDescentLoopClosure {
 			Thread thread = new Thread(new SheetFolder(pdbId));
 			thread.start();
 			threads.add(thread);
+			
+			if(threads.size() >= MAX_THREADS) {
+				thread = threads.get(0);
+				thread.join();
+				threads.remove(0);
+			}
 		}
 		
-		for(Thread thread : threads) {
+		while(threads.size() > 0) {
+			Thread thread = threads.get(0);
 			thread.join();
+			threads.remove(0);
 		}
 		
 		output.close();
 		
 		System.out.println("Done with sheet dominant proteins.");
-		*/
+		
 		
 		
 		/*
 		 * Close all non-central beta sheets.
 		 */
-		/*
+		
 		output = new FileWriter("/home/hkb/Documents/Datalogi/Bachelor/Bachelorprojekt/data/latest-non-central-betasheet-experiment.tsv");
 		
 		for(String pdbId : nonSheetDominantPDBs) {
 			Thread thread = new Thread(new SheetFolder(pdbId));
 			thread.start();
 			threads.add(thread);
+			
+			if(threads.size() >= MAX_THREADS) {
+				thread = threads.get(0);
+				thread.join();
+				threads.remove(0);
+			}
 		}
 		
-		for(Thread thread : threads) {
+		while(threads.size() > 0) {
+			Thread thread = threads.get(0);
 			thread.join();
+			threads.remove(0);
 		}
 		
 		output.close();
 		
 		System.out.println("Done with non sheet dominant proteins.");
-		*/
+		
 		System.out.println("TOTALLY DONE!");
 	}
 	
@@ -279,8 +301,8 @@ public class CyclicCoordinateDescentLoopClosure {
 		
 		// generate unfold conformations
 		AdjustableChainTree cTreeLoopCopy = cTreeLoop.getSubchain(1, cTreeLoop.length());
-
-		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.FROM_PROTEIN, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT, UnfoldingRestriction.NEIGHBOUR_DEPENDENT}) {
+		
+		for(UnfoldingRestriction unfolding : new UnfoldingRestriction[] {UnfoldingRestriction.NONE, UnfoldingRestriction.FROM_PROTEIN, UnfoldingRestriction.NEIGHBOUR_INDEPENDENT, UnfoldingRestriction.NEIGHBOUR_DEPENDENT}) { 
 			Collection<List<Tuple2<Integer,Tuple2<Double,Double>>>> conformations = generateConformations(cTreeLoopCopy, cTreeRemainder, phiPsiPairs, start, end, unfolding);
 			
 			for(FoldingRestriction restriction : new FoldingRestriction[]{FoldingRestriction.NONE, FoldingRestriction.NEIGHBOUR_INDEPENDENT, FoldingRestriction.NEIGHBOUR_DEPENDENT}) {
@@ -413,7 +435,7 @@ public class CyclicCoordinateDescentLoopClosure {
 					Tuple2<Double,Double> angles = null;
 					
 					if(restriction == UnfoldingRestriction.NONE) {
-						angles = new Tuple2<Double,Double>(Math.random()*Math.PI*2, Math.random()*Math.PI*2);
+						angles = new Tuple2<Double,Double>((Math.random() - 0.5) * Math.PI * 2, (Math.random() - 0.5) * Math.PI * 2);
 					} else if (restriction == UnfoldingRestriction.FROM_PROTEIN) {
 						angles = phiPsiPairs.get((int) (Math.random() * phiPsiPairs.size()));
 					} else if (restriction == UnfoldingRestriction.NEIGHBOUR_INDEPENDENT || restriction == UnfoldingRestriction.NEIGHBOUR_INDEPENDENT_NO_CLASH) {
