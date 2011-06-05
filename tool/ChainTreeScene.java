@@ -39,7 +39,7 @@ public class ChainTreeScene {
 	 */
 	public Color[] colorBackbone = {new Color(150,230,255),
 									new Color(150,230,255),
-							     	new Color(150,200,255)};
+							     	new Color(150,230,255)}; // 150,200,255
 
 	public Color colorAlphaHelix = new Color(255, 255, 0);
 	public Color colorBetaSheet = new Color(0, 255, 0);
@@ -96,7 +96,25 @@ public class ChainTreeScene {
 	 * @param cTree The chain tree to be added.
 	 */
 	public void add(ChainTree cTree) {
-		this.add(cTree, 100);
+		this.add(cTree, null, 100, -1);
+	}
+
+	/**
+	 * Add a chain tree to the scene.
+	 * 
+	 * @param cTree The chain tree to be added.
+	 */
+	public void add(ChainTree cTree, int visibility) {
+		this.add(cTree, null, visibility, -1);
+	}
+	
+	/**
+	 * Add a chain tree to the scene.
+	 * 
+	 * @param cTree The chain tree to be added.
+	 */
+	public void add(ChainTree cTree, Color color) {
+		this.add(cTree, color, 100, -1);
 	}
 	
 	/**
@@ -105,7 +123,7 @@ public class ChainTreeScene {
 	 * @param cTree The chain tree to be added.
 	 * @param visibility The overall visibility of the chain tree.
 	 */
-	public void add(ChainTree cTree, int visibility) {
+	public void add(ChainTree cTree, Color masterColor, int visibility, double radius) {
 		
 		if(!this.cTrees.containsKey(cTree)) {
 			List<Point3D> points = cTree.getBackboneAtomPositions();
@@ -116,13 +134,15 @@ public class ChainTreeScene {
 				Point3D current = points.get(i);
 				Point3D next = (i+1 < j) ? points.get(i+1) : null;
 				
-				GUINode node = new GUINode(current, next);
+				GUINode node = (radius > 0) ? new GUINode(current, next, radius): new GUINode(current, next);
 				guiNodes[i] = node;
 				
 				Color color;
 				
 				// add GUI elements to scene
-				if (cTree.isInHelix(cTree.getAminoAcid(i))) {
+				if(masterColor != null) {
+					color = masterColor;
+				} else if (cTree.isInHelix(cTree.getAminoAcid(i))) {
 					color = this.colorAlphaHelix;
 				} else if (cTree.isInSheet(cTree.getAminoAcid(i))) {
 					color = this.colorBetaSheet;
@@ -266,8 +286,14 @@ public class ChainTreeScene {
 	}
 */
 	private class GUINode {
-		public Sphere3d sphere = new Sphere3d(new geom3d.Point3d(0,0,0), 0.3f);
+		public Sphere3d sphere = new Sphere3d(new geom3d.Point3d(0,0,0), 0.2f);
 		public Cylinder3d cylinder = new Cylinder3d(new geom3d.Point3d(0,0,0), new geom3d.Point3d(0,0,0), 0.2f);
+
+		public GUINode(Point3D current, Point3D next, double radius) {
+			this(current, next);
+			this.sphere.radius = radius;
+			this.cylinder.r = radius;
+		}
 		
 		public GUINode(Point3D current, Point3D next) {
 			this.update(current, next);

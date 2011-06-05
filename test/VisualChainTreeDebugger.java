@@ -20,41 +20,8 @@ import edu.geom3D.Capsule;
 
 public class VisualChainTreeDebugger {
 	public static void main(String[] args) {
-		
-		AdjustableChainTree cTree = null;
-		int c = 0;
-		
-		do {
-			try {
-				File[] listOfFiles = new File("/home/hkb/workspace/ProSim/pdb_files").listFiles();
-				String pdbId = listOfFiles[(int)(Math.random() * listOfFiles.length)].getName().substring(0,4);
-				System.out.println(pdbId);
-				//String pdbId = "2QMT";
-			
-				//
-				cTree = new AdjustableChainTree(pdbId);
-			} catch (Throwable e) {
-				System.err.println(e);
-				continue;
-			}
-			
-			c = 0;
-			int i = 0;
-			List<Tuple2<Integer,Integer>> segments = cTree.getIntermediateSegments();
-			for(Tuple2<Integer,Integer> segment : segments) {
-				int length = segment.y - segment.x + 1;
-				if(i > 0 && i < segments.size()-1 && 12 <= length && length <= 14) 
-					c++;
-				i++;
-			}
-			
-		} while(cTree == null || c < 1 || (cTree.getSheetSegments().size() == 0 && cTree.getHelixSegments().size() == 0));// || cTree.length() > 80 || cTree.getSheetSegments().size() == 0 || cTree.getHelixSegments().size() == 0);
-		
-		
-		//AdjustableChainTree cTree = new AdjustableChainTree("1QDD");
-		for(Tuple2<Integer,Integer> segment : cTree.getIntermediateSegments()) {
-			System.out.println(segment.y - segment.x + 1);
-		}		
+
+		AdjustableChainTree cTree = new AdjustableChainTree("1E2B");		
 
 	
 		

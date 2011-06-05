@@ -13,7 +13,7 @@ import energyFunction.AtomDistance;
 import energyFunction.DihedralAngles;
 import energyFunction.EnergyFunction;
 
-public class MonteCarloSimulation {
+public class MonteCarloAbInitioFolding {
 	public static void main(String[] args) throws InterruptedException{
 		/*
 		 * Configuration.
@@ -58,11 +58,7 @@ public class MonteCarloSimulation {
 			
 			if(cTree.isClashing()) {
 				// undo move if tree is clashing
-				//cTree.changeRotationAngle(i, -angle);
-				VisualChainTreeDebugger.paintBoundingVolume(cTree, cTree.l1, scene);
-				VisualChainTreeDebugger.paintBoundingVolume(cTree, cTree.l2, scene);
-				scene.repaint();
-				break;
+				cTree.changeRotationAngle(i, -angle);
 				
 			} else {
 				// if not clashing then test for energy efficiency
